@@ -12,3 +12,16 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Photo {
+  id                Int       @id @default(autoincrement())
+  photoName         String
+  s3Url             String
+  s3ThumbnailUrl    String
+  photoCountry      String?
+  photoCity         String?
+  photoTimestamp    DateTime?
+  uploadedTimestamp DateTime  @default(now())
+
+  photoLocation Json? @map("photoLocation")
+}
