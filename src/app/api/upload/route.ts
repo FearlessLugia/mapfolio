@@ -13,6 +13,29 @@ const s3Client = new S3Client({
   }
 })
 
+async function reverseGeocodeWithMapbox(lat: number, lon: number) {
+  const accessToken = process.env.MAPBOX_ACCESS_TOKEN
+  const url = `https://api.mapbox.com/search/geocode/v6/reverse?types=region&language=en&longitude=${lon}&latitude=${lat}&access_token=${accessToken}`
+
+  const res = await fetch(url)
+
+  if (!res.ok) {
+    throw new Error(`Mapbox reverse geocoding failed with status ${res.status}`)
+  }
+
+  const mapboxResponse = await res.json()
+
+  const feature = mapboxResponse.features?.[0]
+  if (!feature || !feature.properties || !feature.properties.context) {
+    return { city: null, country: null }
+  }
+
+  const city = feature.properties.context.region?.name || null
+  const country = feature.properties.context.country?.name || null
+
+  return { city, country }
+}
+
 export async function POST(req: NextRequest) {
   const contentType = req.headers.get('content-type')
   if (!contentType || !contentType.includes('multipart/form-data')) {
@@ -39,6 +62,8 @@ export async function POST(req: NextRequest) {
       let latitude: number | null = null
       let longitude: number | null = null
       let takenAt: Date | null = null
+      let photoCity: string | null = null
+      let photoCountry: string | null = null
 
       try {
         const exif = await exifr.parse(buffer, { gps: true })
@@ -50,12 +75,17 @@ export async function POST(req: NextRequest) {
         if (exif?.latitude && exif?.longitude) {
           latitude = roundTo6(exif.latitude)
           longitude = roundTo6(exif.longitude)
+
+          const location = await reverseGeocodeWithMapbox(latitude, longitude)
+          photoCity = location.city
+          photoCountry = location.country
         }
 
         if (exif?.DateTimeOriginal) {
           takenAt = exif.DateTimeOriginal
         }
         console.log('latitude, longitude, takenAt', file.name, latitude, longitude, takenAt)
+        console.log('photoCity, photoCountry', photoCity, photoCountry)
       } catch (exifErr) {
         console.warn(`Failed to parse EXIF for ${file.name}:`, exifErr)
       }
@@ -65,8 +95,8 @@ export async function POST(req: NextRequest) {
         data: {
           photoName: file.name,
           url: '',
-          // photoCountry: data.photoCountry,
-          // photoCity: data.photoCity,
+          photoCountry,
+          photoCity,
           photoTimestamp: takenAt,
           photoLocation: latitude && longitude ? { latitude, longitude } : null,
           status: 'pending'

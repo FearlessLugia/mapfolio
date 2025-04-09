@@ -24,7 +24,7 @@ export default async function PhotosPage() {
             />
 
             <div className='absolute bottom-0 left-0 right-0 bg-black/60 text-white text-sm p-2'>
-              <p className='font-semibold truncate'>{photo.photoName}</p>
+              {/*<p className='font-semibold truncate'>{photo.photoName}</p>*/}
               {(photo.photoCity || photo.photoCountry) && (
                 <p className='truncate'>
                   {photo.photoCity ?? ''}
@@ -32,13 +32,6 @@ export default async function PhotosPage() {
                   {photo.photoCountry ?? ''}
                 </p>
               )}
-
-              {photo.photoLocation && (
-                <p className='text-xs'>
-                  {photo.photoLocation.latitude}, {photo.photoLocation.longitude}
-                </p>
-              )}
-
             </div>
           </div>
         ))}
