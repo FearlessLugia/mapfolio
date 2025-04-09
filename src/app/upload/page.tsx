@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 type UploadStatus = {
   file: File
@@ -17,11 +18,32 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null)
   const [uploadStatuses, setUploadStatuses] = useState<UploadStatus[]>([])
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const MAX_SIZE_MB = 10
+  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files
     if (!selectedFiles) return
 
-    const readers = Array.from(selectedFiles).map(
+    const validFiles: File[] = []
+
+    for (const file of Array.from(selectedFiles)) {
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        alert(`${file.name} is not a supported image type.`)
+        continue
+      }
+
+      if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+        alert(`${file.name} exceeds the 10MB size limit.`)
+        continue
+      }
+
+      validFiles.push(file)
+    }
+
+    if (validFiles.length === 0) return
+
+    const readers = validFiles.map(
       (file) =>
         new Promise<UploadStatus>((resolve) => {
           const reader = new FileReader()
@@ -37,7 +59,8 @@ export default function UploadPage() {
         })
     )
 
-    Promise.all(readers).then((results) => setUploadStatuses(results))
+    const results = await Promise.all(readers)
+    setUploadStatuses(results)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -88,7 +111,7 @@ export default function UploadPage() {
 
   return (
     <>
-      <h1 className='text-5xl font-bold mb-8'>Upload to DigitalOcean Spaces</h1>
+      <h1 className='text-5xl font-bold mb-8'>Upload to Mapfolio</h1>
       <form onSubmit={handleSubmit} className='space-y-4'>
         <input
           type='file'
@@ -101,9 +124,16 @@ export default function UploadPage() {
         {/* thumbnail preview */}
         <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mt-4'>
           {uploadStatuses.map((item, index) => (
-            <div key={index} className='flex flex-col items-center'>
-              <img src={item.preview} className='w-full rounded shadow'/>
-              <div className='w-full bg-gray-200 rounded h-2 mt-2 overflow-hidden'>
+            <div key={index} className='relative w-full aspect-[4/3] rounded overflow-hidden shadow'>
+              <Image
+                src={item.preview}
+                alt={`preview-${index}`}
+                fill
+                unoptimized
+                className='object-cover'
+              />
+
+              <div className='absolute bottom-0 left-0 right-0 h-2 bg-white/50'>
                 <div
                   className={`h-full transition-all ${
                     item.status === 'success'
@@ -115,6 +145,7 @@ export default function UploadPage() {
                   style={{ width: `${item.progress}%` }}
                 />
               </div>
+
               <p className='text-sm mt-1'>
                 {item.status === 'waiting' && 'Waiting for upload'}
                 {item.status === 'uploading' && `Uploading... ${item.progress}%`}
