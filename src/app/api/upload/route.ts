@@ -55,57 +55,53 @@ export async function POST(req: NextRequest) {
         if (exif?.DateTimeOriginal) {
           takenAt = exif.DateTimeOriginal
         }
-        console.log('latitude,longitude, takenAt', latitude, longitude, takenAt)
+        console.log('latitude, longitude, takenAt', file.name, latitude, longitude, takenAt)
       } catch (exifErr) {
         console.warn(`Failed to parse EXIF for ${file.name}:`, exifErr)
       }
 
-      // Use transaction to ensure atomicity
-      const record = await db.$transaction(async (tx) => {
-        // Step 1: write metadata
-        const dbRecord = await tx.photo.create({
-          data: {
-            photoName: file.name,
-            url: '',
-            // photoCountry: data.photoCountry,
-            // photoCity: data.photoCity,
-            photoTimestamp: takenAt,
-            photoLocation: latitude && longitude ? { latitude, longitude } : null,
-            status: 'pending'
-          }
-        })
-
-        // Step 2: upload file to S3
-        const key = `uploads/${Date.now()}-${file.name}`
-
-        const command = new PutObjectCommand({
-          Bucket: process.env.SPACES_BUCKET, // next-app-files
-          Key: key,
-          Body: buffer,
-          ACL: 'public-read',
-          ContentType: file.type || 'application/octet-stream'
-        })
-
-        await s3Client.send(command)
-
-        // Step 3: update metadata with S3 URL
-        const url = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.digitaloceanspaces.com/${key}`
-
-        const updatedRecord = await tx.photo.update({
-          where: { id: dbRecord.id },
-          data: {
-            url,
-            status: 'uploaded'
-          }
-        })
-
-        return updatedRecord
+      // Step 1: write metadata
+      const dbRecord = await db.photo.create({
+        data: {
+          photoName: file.name,
+          url: '',
+          // photoCountry: data.photoCountry,
+          // photoCity: data.photoCity,
+          photoTimestamp: takenAt,
+          photoLocation: latitude && longitude ? { latitude, longitude } : null,
+          status: 'pending'
+        }
       })
 
-      dbRecords.push(record)
+      // Step 2: upload file to S3
+      const key = `uploads/${Date.now()}-${file.name}`
+
+      const command = new PutObjectCommand({
+        Bucket: process.env.SPACES_BUCKET, // next-app-files
+        Key: key,
+        Body: buffer,
+        ACL: 'public-read',
+        ContentType: file.type || 'application/octet-stream'
+      })
+
+      await s3Client.send(command)
+
+      // Step 3: update metadata with S3 URL
+      const url = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.digitaloceanspaces.com/${key}`
+
+      const updatedRecord = await db.photo.update({
+        where: { id: dbRecord.id },
+        data: {
+          url,
+          status: 'uploaded'
+        }
+      })
+
+      dbRecords.push(updatedRecord)
     }
 
     return NextResponse.json({ dbRecords }, { status: 200 })
+
   } catch (error) {
     console.error('Upload error:', error)
     return NextResponse.json(
