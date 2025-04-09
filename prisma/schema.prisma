@@ -13,15 +13,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum PhotoStatus {
+  pending
+  uploaded
+  error
+}
+
 model Photo {
-  id                Int       @id @default(autoincrement())
+  id                Int         @id @default(autoincrement())
   photoName         String
   s3Url             String
   s3ThumbnailUrl    String
   photoCountry      String?
   photoCity         String?
   photoTimestamp    DateTime?
-  uploadedTimestamp DateTime  @default(now())
+  uploadedTimestamp DateTime    @default(now())
+  status            PhotoStatus @default(pending)
 
   photoLocation Json? @map("photoLocation")
 }
