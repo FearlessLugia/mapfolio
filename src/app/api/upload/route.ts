@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
       await s3Client.send(command)
 
       // Step 3: update metadata with S3 URL
-      const url = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.digitaloceanspaces.com/${key}`
+      const url = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.cdn.digitaloceanspaces.com/${key}`
 
       const updatedRecord = await db.photo.update({
         where: { id: dbRecord.id },
