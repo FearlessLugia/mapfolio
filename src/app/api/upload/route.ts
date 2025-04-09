@@ -66,8 +66,7 @@ export async function POST(req: NextRequest) {
         const dbRecord = await tx.photo.create({
           data: {
             photoName: file.name,
-            s3Url: '',
-            s3ThumbnailUrl: '',
+            url: '',
             // photoCountry: data.photoCountry,
             // photoCity: data.photoCity,
             photoTimestamp: takenAt,
@@ -90,12 +89,12 @@ export async function POST(req: NextRequest) {
         await s3Client.send(command)
 
         // Step 3: update metadata with S3 URL
-        const s3Url = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.digitaloceanspaces.com/${key}`
+        const url = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.digitaloceanspaces.com/${key}`
 
         const updatedRecord = await tx.photo.update({
           where: { id: dbRecord.id },
           data: {
-            s3Url,
+            url,
             status: 'uploaded'
           }
         })

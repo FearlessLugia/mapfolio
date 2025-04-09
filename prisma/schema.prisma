@@ -22,8 +22,7 @@ enum PhotoStatus {
 model Photo {
   id                Int         @id @default(autoincrement())
   photoName         String
-  s3Url             String
-  s3ThumbnailUrl    String
+  url               String
   photoCountry      String?
   photoCity         String?
   photoTimestamp    DateTime?
