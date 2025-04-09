@@ -2,63 +2,89 @@
 
 import { useState } from 'react'
 
+type UploadStatus = {
+  file: File
+  preview: string
+  progress: number
+  status: 'waiting' | 'uploading' | 'success' | 'error'
+  url?: string
+}
+
 export default function UploadPage() {
   const [files, setFiles] = useState<FileList | null>(null)
   const [previews, setPreviews] = useState<string[]>([])
   // const [urls, setUrls] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [uploadStatuses, setUploadStatuses] = useState<UploadStatus[]>([])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files
-    setFiles(selectedFiles)
+    if (!selectedFiles) return
 
-    if (selectedFiles) {
-      const previewList: string[] = []
-      Array.from(selectedFiles).forEach((file) => {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          if (typeof reader.result === 'string') {
-            previewList.push(reader.result)
-            if (previewList.length === selectedFiles.length) {
-              setPreviews(previewList)
-            }
+    const readers = Array.from(selectedFiles).map(
+      (file) =>
+        new Promise<UploadStatus>((resolve) => {
+          const reader = new FileReader()
+          reader.onloadend = () => {
+            resolve({
+              file,
+              preview: reader.result as string,
+              progress: 0,
+              status: 'pending'
+            })
           }
-        }
-        reader.readAsDataURL(file)
-      })
-    }
+          reader.readAsDataURL(file)
+        })
+    )
+
+    Promise.all(readers).then((results) => setUploadStatuses(results))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!files || files.length === 0) {
-      setError('Please select a file')
-      return
-    }
 
-    const formData = new FormData()
-    Array.from(files).forEach((file) => {
-      formData.append('files', file)
-    })
+    const updatedStatuses = [...uploadStatuses]
 
-    try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData
+    await Promise.all(
+      updatedStatuses.map((item, index) => {
+        return new Promise<void>((resolve) => {
+          const xhr = new XMLHttpRequest()
+          const formData = new FormData()
+          formData.append('files', item.file)
+
+          xhr.open('POST', '/api/upload')
+
+          xhr.upload.onprogress = (e) => {
+            const percent = Math.round((e.loaded / e.total) * 100)
+            updatedStatuses[index].progress = percent
+            updatedStatuses[index].status = 'uploading'
+            setUploadStatuses([...updatedStatuses])
+          }
+
+          xhr.onload = () => {
+            if (xhr.status === 200) {
+              const res = JSON.parse(xhr.responseText)
+              updatedStatuses[index].status = 'success'
+              updatedStatuses[index].url = res.dbRecords?.[0]?.s3Url || null
+            } else {
+              updatedStatuses[index].status = 'error'
+            }
+            setUploadStatuses([...updatedStatuses])
+            resolve()
+          }
+
+          xhr.onerror = () => {
+            updatedStatuses[index].status = 'error'
+            setUploadStatuses([...updatedStatuses])
+            resolve()
+          }
+
+          xhr.send(formData)
+        })
       })
-
-      if (!res.ok) {
-        throw new Error('Upload failed')
-      }
-
-      const data = await res.json()
-      // setUrls(data.urls)
-      setError(null)
-    } catch (err) {
-      setError('Failed to upload file')
-      console.error(err)
-    }
+    )
   }
+
 
   return (
     <>
@@ -74,13 +100,28 @@ export default function UploadPage() {
 
         {/* thumbnail preview */}
         <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mt-4'>
-          {previews.map((src, index) => (
-            <img
-              key={index}
-              src={src}
-              alt={`Preview ${index}`}
-              className='w-full h-auto rounded shadow'
-            />
+          {uploadStatuses.map((item, index) => (
+            <div key={index} className='flex flex-col items-center'>
+              <img src={item.preview} className='w-full rounded shadow'/>
+              <div className='w-full bg-gray-200 rounded h-2 mt-2 overflow-hidden'>
+                <div
+                  className={`h-full transition-all ${
+                    item.status === 'success'
+                      ? 'bg-green-500'
+                      : item.status === 'error'
+                        ? 'bg-red-500'
+                        : 'bg-blue-500'
+                  }`}
+                  style={{ width: `${item.progress}%` }}
+                />
+              </div>
+              <p className='text-sm mt-1'>
+                {item.status === 'waiting' && 'Waiting for upload'}
+                {item.status === 'uploading' && `Uploading... ${item.progress}%`}
+                {item.status === 'success' && '✅ Uploaded successfully'}
+                {item.status === 'error' && '❌ Upload failed'}
+              </p>
+            </div>
           ))}
         </div>
 
@@ -93,26 +134,6 @@ export default function UploadPage() {
       </form>
 
       {error && <p className='text-red-600'>{error}</p>}
-
-      {/*{urls.length > 0 && (*/}
-      {/*  <div>*/}
-      {/*    <p>Uploaded files: </p>*/}
-      {/*    <ul className='mt-4 space-y-2'>*/}
-      {/*      {urls.map((url) => (*/}
-      {/*        <li key={url}>*/}
-      {/*          <a*/}
-      {/*            href={url}*/}
-      {/*            target='_blank'*/}
-      {/*            rel='noopener noreferrer'*/}
-      {/*            className='text-blue-600 hover:underline'*/}
-      {/*          >*/}
-      {/*            {url}*/}
-      {/*          </a>*/}
-      {/*        </li>*/}
-      {/*      ))}*/}
-      {/*    </ul>*/}
-      {/*  </div>*/}
-      {/*)}*/}
     </>
   )
 }
