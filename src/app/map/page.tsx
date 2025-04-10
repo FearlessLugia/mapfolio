@@ -13,7 +13,7 @@ export default function PhotoMapPage() {
 
   useEffect(() => {
     const fetchPhotos = async () => {
-      const res = await fetch('/api/photo') // 你已有的 API
+      const res = await fetch('/api/photo')
       const photos: Photo[] = await res.json()
 
       if (!mapContainer.current) return
@@ -21,7 +21,8 @@ export default function PhotoMapPage() {
       const map = new mapboxgl.Map({
         container: mapContainer.current,
         style: 'mapbox://styles/mapbox/streets-v11',
-        center: [-79.39, 43.65],
+        // center: [-79.39, 43.65],
+        center: [2, 48],
         zoom: 3
       })
 
@@ -31,19 +32,16 @@ export default function PhotoMapPage() {
         type: 'FeatureCollection',
         features: photos
           .filter((p) => p.photoLocation)
-          .map((photo) => ({
+          .map((p) => ({
             type: 'Feature',
             properties: {
-              id: photo.id,
-              photoName: photo.photoName,
-              photoUrl: photo.url
+              id: p.id,
+              photoName: p.photoName,
+              photoUrl: p.url
             },
             geometry: {
               type: 'Point',
-              coordinates: [
-                photo.photoLocation!.longitude,
-                photo.photoLocation!.latitude
-              ]
+              coordinates: [p.photoLocation!.longitude, p.photoLocation!.latitude]
             }
           }))
       }
@@ -53,83 +51,122 @@ export default function PhotoMapPage() {
           type: 'geojson',
           data: geojson,
           cluster: true,
-          clusterMaxZoom: 14,
-          clusterRadius: 50
+          clusterRadius: 60,
+          clusterMaxZoom: 14
         })
 
-        // Cluster Circle
         map.addLayer({
-          id: 'clusters',
+          id: 'photo-cluster-dummy',
           type: 'circle',
           source: 'photos',
           filter: ['has', 'point_count'],
           paint: {
-            'circle-color': '#2563eb',
-            'circle-radius': 28,
-            'circle-stroke-width': 3,
-            'circle-stroke-color': '#fff'
+            'circle-opacity': 0,
+            'circle-radius': 0
           }
         })
 
-        // Cluster Count
-        map.addLayer({
-          id: 'cluster-count',
-          type: 'symbol',
-          source: 'photos',
-          filter: ['has', 'point_count'],
-          layout: {
-            'text-field': '{point_count_abbreviated}',
-            'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 14
-          },
-          paint: {
-            'text-color': '#ffffff'
-          }
-        })
+        const source = map.getSource('photos') as mapboxgl.GeoJSONSource
+        let markers: mapboxgl.Marker[] = []
 
-        for (let i = 0; i < geojson.features.length; i++) {
-          const feature = geojson.features[i]
+        const renderClusters = async () => {
+          markers.forEach((m) => m.remove())
+          markers = []
 
-          const container = document.createElement('div')
-          container.className =
-            'relative w-[128px] h-[128px] rounded-xl overflow-hidden border-2 border-white shadow-lg cursor-pointer'
+          const clusterFeatures = map.queryRenderedFeatures({
+            layers: ['photo-cluster-dummy']
+          })
+          const clusterIds = clusterFeatures.map((f) => f.properties!.cluster_id)
 
-          container.style.backgroundImage = `url(${feature.properties.photoUrl})`
-          container.style.backgroundSize = 'cover'
-          container.style.backgroundPosition = 'center'
+          const clusteredIdSet = new Set<string>()
+          const clusterMap = new Map<number, mapboxgl.MapboxGeoJSONFeature>()
 
-          // 👇 添加编号元素
-          const badge = document.createElement('div')
-          badge.className =
-            'absolute bottom-1 right-1 text-xs px-1.5 py-0.5 bg-black/70 text-white rounded-full font-medium'
-          badge.textContent = `${i + 1}`
+          // Step 1: 先收集所有被聚合的照片 ID
+          await Promise.all(
+            clusterIds.map(
+              (clusterId) =>
+                new Promise<void>((resolve) => {
+                  source.getClusterLeaves(clusterId, 100, 0, (err, leaves) => {
+                    if (!err && leaves.length > 0) {
+                      leaves.forEach((leaf) => {
+                        clusteredIdSet.add(leaf.properties.id)
+                      })
+                      // 用其中一张图做缩略图展示
+                      clusterMap.set(clusterId, leaves[0])
+                    }
+                    resolve()
+                  })
+                })
+            )
+          )
 
-          container.appendChild(badge)
+          // Step 2: 渲染 cluster marker
+          clusterFeatures.forEach((f) => {
+            const coords = (f.geometry as any).coordinates
+            const clusterId = f.properties!.cluster_id
+            const clusterCount = f.properties!.point_count
 
-          // container.addEventListener('click', () => {
-          //   alert(`📍 ${feature.properties.photoName}`)
-          // })
+            const sample = clusterMap.get(clusterId)
+            if (!sample) return
+            const sampleUrl = sample.properties.photoUrl
 
-          new mapboxgl.Marker(container)
-            .setLngLat(feature.geometry.coordinates)
-            .addTo(map)
+            const el = document.createElement('div')
+            el.className =
+              'relative w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center'
+            el.style.backgroundImage = `url(${sampleUrl})`
+
+            const badge = document.createElement('div')
+            badge.className =
+              'absolute bottom-0 left-0 text-xs px-2 py-0.5 bg-white/90 text-black rounded-tr-md font-semibold'
+            badge.textContent = String(clusterCount)
+
+            el.appendChild(badge)
+
+            el.addEventListener('click', () => {
+              source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+                if (err) return
+
+                map.once('moveend', () => {
+                  renderClusters()
+                })
+
+                // ✅ 强制等动画结束后刷新 clusters
+                map.once('moveend', () => {
+                  // 🔁 二次触发 renderClusters，确保缩放后能正确显示
+                  renderClusters()
+                })
+              })
+            })
+
+
+            const marker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map)
+            markers.push(marker)
+          })
+
+          // Step 3: 渲染“未被聚合”的照片 marker
+          geojson.features.forEach((feature) => {
+            if (clusteredIdSet.has(feature.properties.id)) return
+
+            const coord = feature.geometry.coordinates
+            const el = document.createElement('div')
+            el.className =
+              'w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center cursor-pointer'
+            el.style.backgroundImage = `url(${feature.properties.photoUrl})`
+
+            el.addEventListener('click', () => {
+              alert(`📸 ${feature.properties.photoName}`)
+            })
+
+            const marker = new mapboxgl.Marker(el).setLngLat(coord).addTo(map)
+            markers.push(marker)
+          })
         }
 
-        // 点击 cluster 放大
-        map.on('click', 'clusters', (e) => {
-          const features = map.queryRenderedFeatures(e.point, {
-            layers: ['clusters']
-          })
-          const clusterId = features[0].properties?.cluster_id
-          const source = map.getSource('photos') as mapboxgl.GeoJSONSource
+        map.on('moveend', renderClusters)
+        map.on('zoomend', renderClusters)
 
-          source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-            if (err) return
-            map.easeTo({
-              center: (features[0].geometry as any).coordinates,
-              zoom
-            })
-          })
+        map.once('idle', () => {
+          renderClusters()
         })
       })
     }
@@ -141,9 +178,5 @@ export default function PhotoMapPage() {
     }
   }, [])
 
-  return (
-    <main className="h-screen">
-      <div ref={mapContainer} className="w-full h-full" />
-    </main>
-  )
+  return <div ref={mapContainer} className='w-full h-screen'/>
 }
