@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as exifr from 'exifr'
 import { db } from '@/lib/prisma'
 import { Photo } from '@prisma/client'
+import sharp from 'sharp'
 
 const s3Client = new S3Client({
   endpoint: process.env.SPACES_ENDPOINT,
@@ -107,7 +108,7 @@ export async function POST(req: NextRequest) {
       const key = `uploads/${Date.now()}-${file.name}`
 
       const command = new PutObjectCommand({
-        Bucket: process.env.SPACES_BUCKET, // next-app-files
+        Bucket: process.env.SPACES_BUCKET,
         Key: key,
         Body: buffer,
         ACL: 'public-read',
@@ -116,7 +117,31 @@ export async function POST(req: NextRequest) {
 
       await s3Client.send(command)
 
-      // Step 3: update metadata with S3 URL
+      // Step 3: generate thumbnail
+      let thumbnailBuffer: Buffer
+      try {
+        thumbnailBuffer = await sharp(buffer)
+          .resize({ width: 300 })
+          .toBuffer()
+      } catch (sharpErr) {
+        console.error('Failed to generate thumbnail:', sharpErr)
+        continue
+      }
+
+      // Step 4: upload thumbnail to S3
+      const thumbKey = `thumbnails/${Date.now()}-${file.name.replace(/\.[^.]+$/, '')}.jpg`
+      const thumbCommand = new PutObjectCommand({
+        Bucket: process.env.SPACES_BUCKET,
+        Key: thumbKey,
+        Body: thumbnailBuffer,
+        ACL: 'public-read',
+        ContentType: 'image/jpeg'
+      })
+
+      await s3Client.send(thumbCommand)
+
+
+      // Step 5: update metadata with S3 URL
       const url = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.cdn.digitaloceanspaces.com/${key}`
 
       const updatedRecord = await db.photo.update({
