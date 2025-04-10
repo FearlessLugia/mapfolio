@@ -12,7 +12,7 @@ export default function PhotoMapPage() {
   const mapRef = useRef<mapboxgl.Map | null>(null)
 
   useEffect(() => {
-    const fetchPhotos = async () => {
+    const fetchThumbnails = async () => {
       const res = await fetch('/api/photo')
       const photos: Photo[] = await res.json()
 
@@ -20,7 +20,6 @@ export default function PhotoMapPage() {
 
       const map = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11',
         // center: [-79.39, 43.65],
         center: [2, 48],
         zoom: 3
@@ -37,7 +36,7 @@ export default function PhotoMapPage() {
             properties: {
               id: p.id,
               photoName: p.photoName,
-              photoUrl: p.url
+              photoUrl: p.thumbnailUrl
             },
             geometry: {
               type: 'Point',
@@ -171,7 +170,7 @@ export default function PhotoMapPage() {
       })
     }
 
-    fetchPhotos()
+    fetchThumbnails()
 
     return () => {
       mapRef.current?.remove()

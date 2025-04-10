@@ -7,8 +7,8 @@ export async function POST(req: Request) {
   const newPhoto = await db.photo.create({
     data: {
       photoName: data.photoName,
-      s3Url: data.s3Url,
-      s3ThumbnailUrl: data.s3ThumbnailUrl,
+      url: data.url,
+      thumbnailUrl: data.thumbnailUrl,
       photoCountry: data.photoCountry,
       photoCity: data.photoCity,
       photoTimestamp: new Date(data.photoTimestamp),
@@ -31,6 +31,7 @@ export async function GET() {
       id: true,
       photoName: true,
       url: true,
+      thumbnailUrl: true,
       photoLocation: true,
       photoCity: true,
       photoCountry: true

@@ -96,6 +96,7 @@ export async function POST(req: NextRequest) {
         data: {
           photoName: file.name,
           url: '',
+          thumbnailUrl: '',
           photoCountry,
           photoCity,
           photoTimestamp: takenAt,
@@ -104,7 +105,7 @@ export async function POST(req: NextRequest) {
         }
       })
 
-      // Step 2: upload file to S3
+      // Step 2: upload original image to S3
       const key = `uploads/${Date.now()}-${file.name}`
 
       const command = new PutObjectCommand({
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Step 4: upload thumbnail to S3
-      const thumbKey = `thumbnails/${Date.now()}-${file.name.replace(/\.[^.]+$/, '')}.jpg`
+      const thumbKey = `uploads/thumbnails/${Date.now()}-${file.name.replace(/\.[^.]+$/, '')}.jpg`
       const thumbCommand = new PutObjectCommand({
         Bucket: process.env.SPACES_BUCKET,
         Key: thumbKey,
@@ -143,11 +144,13 @@ export async function POST(req: NextRequest) {
 
       // Step 5: update metadata with S3 URL
       const url = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.cdn.digitaloceanspaces.com/${key}`
+      const thumbnailUrl = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.cdn.digitaloceanspaces.com/${thumbKey}`
 
       const updatedRecord = await db.photo.update({
         where: { id: dbRecord.id },
         data: {
           url,
+          thumbnailUrl,
           status: 'uploaded'
         }
       })
