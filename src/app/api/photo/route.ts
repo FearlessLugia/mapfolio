@@ -12,9 +12,30 @@ export async function POST(req: Request) {
       photoCountry: data.photoCountry,
       photoCity: data.photoCity,
       photoTimestamp: new Date(data.photoTimestamp),
-      photoLocation: data.photoLocation,
+      photoLocation: data.photoLocation
     }
   })
 
   return NextResponse.json(newPhoto)
+}
+
+export async function GET() {
+  const photos = await db.photo.findMany({
+    where: {
+      photoLocation: {
+        not: null
+      }
+    },
+    orderBy: { id: 'asc' },
+    select: {
+      id: true,
+      photoName: true,
+      url: true,
+      photoLocation: true,
+      photoCity: true,
+      photoCountry: true
+    }
+  })
+
+  return NextResponse.json(photos)
 }
