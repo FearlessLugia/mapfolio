@@ -80,7 +80,7 @@ export default function PhotoMapPage() {
           const clusteredIdSet = new Set<string>()
           const clusterMap = new Map<number, mapboxgl.MapboxGeoJSONFeature>()
 
-          // Step 1: 先收集所有被聚合的照片 ID
+          // Step 1: get cluster leaves
           await Promise.all(
             clusterIds.map(
               (clusterId) =>
@@ -90,7 +90,7 @@ export default function PhotoMapPage() {
                       leaves.forEach((leaf) => {
                         clusteredIdSet.add(leaf.properties.id)
                       })
-                      // 用其中一张图做缩略图展示
+                      // use the first leaf as the sample
                       clusterMap.set(clusterId, leaves[0])
                     }
                     resolve()
@@ -99,7 +99,7 @@ export default function PhotoMapPage() {
             )
           )
 
-          // Step 2: 渲染 cluster marker
+          // Step 2: render cluster markers
           clusterFeatures.forEach((f) => {
             const coords = (f.geometry as any).coordinates
             const clusterId = f.properties!.cluster_id
@@ -129,9 +129,9 @@ export default function PhotoMapPage() {
                   renderClusters()
                 })
 
-                // ✅ 强制等动画结束后刷新 clusters
+                // Wait for the map to finish moving before zooming in
                 map.once('moveend', () => {
-                  // 🔁 二次触发 renderClusters，确保缩放后能正确显示
+                  // second moveend event is triggered after zooming in
                   renderClusters()
                 })
               })
@@ -142,7 +142,7 @@ export default function PhotoMapPage() {
             markers.push(marker)
           })
 
-          // Step 3: 渲染“未被聚合”的照片 marker
+          // Step 3: render individual markers
           geojson.features.forEach((feature) => {
             if (clusteredIdSet.has(feature.properties.id)) return
 
