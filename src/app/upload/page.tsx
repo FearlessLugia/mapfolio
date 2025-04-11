@@ -12,10 +12,10 @@ type UploadStatus = {
 }
 
 export default function UploadPage() {
-  const [files, setFiles] = useState<FileList | null>(null)
-  const [previews, setPreviews] = useState<string[]>([])
+  // const [files, setFiles] = useState<FileList | null>(null)
+  // const [previews, setPreviews] = useState<string[]>([])
   // const [urls, setUrls] = useState<string[]>([])
-  const [error, setError] = useState<string | null>(null)
+  // const [error, setError] = useState<string | null>(null)
   const [uploadStatuses, setUploadStatuses] = useState<UploadStatus[]>([])
 
   const MAX_SIZE_MB = 10
@@ -52,7 +52,7 @@ export default function UploadPage() {
               file,
               preview: reader.result as string,
               progress: 0,
-              status: 'pending'
+              status: 'uploading'
             })
           }
           reader.readAsDataURL(file)
@@ -164,7 +164,7 @@ export default function UploadPage() {
         </button>
       </form>
 
-      {error && <p className='text-red-600'>{error}</p>}
+      {/*{error && <p className='text-red-600'>{error}</p>}*/}
     </>
   )
 }

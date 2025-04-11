@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { Photo } from '@prisma/client'
+import type { FeatureCollection, Point } from 'geojson'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!
 
@@ -27,22 +28,48 @@ export default function PhotoMapPage() {
 
       mapRef.current = map
 
-      const geojson = {
+      // const geojson = {
+      //   type: 'FeatureCollection',
+      //   features: photos
+      //     .filter((p) => p.photoLocation)
+      //     .map((p) => {
+      //       const loc = p.photoLocation as { latitude: number; longitude: number }
+      //
+      //       return {
+      //         type: 'Feature',
+      //         properties: {
+      //           id: p.id,
+      //           photoName: p.photoName,
+      //           photoUrl: p.thumbnailUrl
+      //         },
+      //         geometry: {
+      //           type: 'Point',
+      //           coordinates: [loc.longitude, loc.latitude]
+      //         }
+      //       }
+      //     })
+      // }
+
+      const geojson: FeatureCollection<Point, { id: number; photoName: string; photoUrl: string }> = {
         type: 'FeatureCollection',
         features: photos
           .filter((p) => p.photoLocation)
-          .map((p) => ({
-            type: 'Feature',
-            properties: {
-              id: p.id,
-              photoName: p.photoName,
-              photoUrl: p.thumbnailUrl
-            },
-            geometry: {
-              type: 'Point',
-              coordinates: [p.photoLocation!.longitude, p.photoLocation!.latitude]
+          .map((p) => {
+            const loc = p.photoLocation as { latitude: number; longitude: number }
+
+            return {
+              type: 'Feature',
+              properties: {
+                id: p.id,
+                photoName: p.photoName,
+                photoUrl: p.thumbnailUrl
+              },
+              geometry: {
+                type: 'Point',
+                coordinates: [loc.longitude, loc.latitude]
+              }
             }
-          }))
+          })
       }
 
       map.on('load', () => {
@@ -86,12 +113,13 @@ export default function PhotoMapPage() {
               (clusterId) =>
                 new Promise<void>((resolve) => {
                   source.getClusterLeaves(clusterId, 100, 0, (err, leaves) => {
-                    if (!err && leaves.length > 0) {
+                    if (!err && Array.isArray(leaves) && leaves.length > 0) {
                       leaves.forEach((leaf) => {
-                        clusteredIdSet.add(leaf.properties.id)
+                        if (leaf.properties && 'id' in leaf.properties) {
+                          clusteredIdSet.add(leaf.properties.id)
+                        }
                       })
-                      // use the first leaf as the sample
-                      clusterMap.set(clusterId, leaves[0])
+                      clusterMap.set(clusterId, leaves[0] as mapboxgl.MapboxGeoJSONFeature)
                     }
                     resolve()
                   })
@@ -101,12 +129,12 @@ export default function PhotoMapPage() {
 
           // Step 2: render cluster markers
           clusterFeatures.forEach((f) => {
-            const coords = (f.geometry as any).coordinates
+            const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number]
             const clusterId = f.properties!.cluster_id
             const clusterCount = f.properties!.point_count
 
             const sample = clusterMap.get(clusterId)
-            if (!sample) return
+            if (!sample || !sample.properties) return
             const sampleUrl = sample.properties.photoUrl
 
             const el = document.createElement('div')
@@ -122,7 +150,7 @@ export default function PhotoMapPage() {
             el.appendChild(badge)
 
             el.addEventListener('click', () => {
-              source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+              source.getClusterExpansionZoom(clusterId, (err) => {
                 if (err) return
 
                 map.once('moveend', () => {
@@ -138,15 +166,16 @@ export default function PhotoMapPage() {
             })
 
 
-            const marker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map)
+            const marker = new mapboxgl.Marker(el)
+              .setLngLat(coords)
+              .addTo(map)
             markers.push(marker)
           })
 
           // Step 3: render individual markers
           geojson.features.forEach((feature) => {
-            if (clusteredIdSet.has(feature.properties.id)) return
+            if (clusteredIdSet.has(String(feature.properties.id))) return
 
-            const coord = feature.geometry.coordinates
             const el = document.createElement('div')
             el.className =
               'w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center cursor-pointer'
@@ -156,7 +185,10 @@ export default function PhotoMapPage() {
               alert(`📸 ${feature.properties.photoName}`)
             })
 
-            const marker = new mapboxgl.Marker(el).setLngLat(coord).addTo(map)
+            const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
+            const marker = new mapboxgl.Marker(el)
+              .setLngLat(coords)
+              .addTo(map)
             markers.push(marker)
           })
         }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 export async function POST(req: Request) {
   const data = await req.json()
@@ -23,7 +24,7 @@ export async function GET() {
   const photos = await db.photo.findMany({
     where: {
       photoLocation: {
-        not: null
+        not: Prisma.JsonNull
       }
     },
     orderBy: { id: 'asc' },

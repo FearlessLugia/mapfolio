@@ -2,7 +2,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { NextRequest, NextResponse } from 'next/server'
 import * as exifr from 'exifr'
 import { db } from '@/lib/prisma'
-import { Photo } from '@prisma/client'
+import { Photo, Prisma } from '@prisma/client'
 import sharp from 'sharp'
 
 const s3Client = new S3Client({
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
           latitude = roundTo6(exif.latitude)
           longitude = roundTo6(exif.longitude)
 
-          const location = await reverseGeocodeWithMapbox(latitude, longitude)
+          const location = await reverseGeocodeWithMapbox(latitude!, longitude!)
           photoCity = location.city
           photoCountry = location.country
         }
@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
           photoCountry,
           photoCity,
           photoTimestamp: takenAt,
-          photoLocation: latitude && longitude ? { latitude, longitude } : null,
+          photoLocation: latitude && longitude ? { latitude, longitude } : Prisma.JsonNull,
           status: 'pending'
         }
       })
