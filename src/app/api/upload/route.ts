@@ -122,7 +122,7 @@ export async function POST(req: NextRequest) {
       let thumbnailBuffer: Buffer
       try {
         thumbnailBuffer = await sharp(buffer)
-          .resize({ width: 300 })
+          .resize({ width: 600 })
           .toBuffer()
       } catch (sharpErr) {
         console.error('Failed to generate thumbnail:', sharpErr)

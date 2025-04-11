@@ -17,10 +17,11 @@ export default async function PhotosPage() {
             className='relative w-full aspect-[4/3] rounded overflow-hidden shadow'
           >
             <Image
-              src={photo.url}
+              src={photo.thumbnailUrl}
               alt={photo.photoName}
               fill
               className='object-cover'
+              loading="lazy"
             />
 
             <div className='absolute bottom-0 left-0 right-0 bg-black/60 text-white text-sm p-2'>
