@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import { Toaster } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 
 type UploadStatus = {
   file: File
@@ -107,71 +109,86 @@ export default function UploadPage() {
         })
       })
     )
+
+    // Once all uploads are finished, check if all were successful
+    const allSuccess = updatedStatuses.every((item) => item.status === 'success')
+
+    if (allSuccess) {
+      toast.success('Upload Complete', {
+        description: 'All files uploaded successfully!'
+      })
+    } else {
+      toast.error('Upload Error', {
+        description: 'Some files failed to upload. Please try again.'
+      })
+    }
   }
 
-  // Programmatically trigger the hidden file input:
+// Programmatically trigger the hidden file input:
   const handleClick = () => {
     // We can directly get the input with getElementById or a ref
     document.getElementById('hidden-file-input')?.click()
   }
 
   return (
-    <main className='p-6'>
-      <h1 className='text-2xl font-bold mb-6'>Upload to Mapfolio</h1>
-      <form onSubmit={handleSubmit} className='space-y-4'>
-        <div className='flex justify-between'>
-          {/* Hidden file input */}
-          <input
-            id='hidden-file-input'
-            type='file'
-            multiple
-            accept='image/*'
-            className='hidden'
-            onChange={handleFileChange}
-          />
-          {/* Button that triggers the hidden file input */}
-          <Button onClick={handleClick}>Select Files</Button>
+    <div>
+      <main className='p-6'>
+        <h1 className='text-2xl font-bold mb-6'>Upload to Mapfolio</h1>
+        <form onSubmit={handleSubmit} className='space-y-4'>
+          <div className='flex justify-between'>
+            {/* Hidden file input */}
+            <input
+              id='hidden-file-input'
+              type='file'
+              multiple
+              accept='image/*'
+              className='hidden'
+              onChange={handleFileChange}
+            />
+            {/* Button that triggers the hidden file input */}
+            <Button onClick={handleClick}>Select Files</Button>
 
-          <Button type='submit'>Upload</Button>
-        </div>
+            <Button type='submit'>Upload</Button>
+          </div>
 
-        {/* thumbnail preview */}
-        <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mt-4'>
-          {uploadStatuses.map((item, index) => (
-            <div key={index} className='relative w-full aspect-[4/3] rounded overflow-hidden shadow'>
-              <Image
-                src={item.preview}
-                alt={`preview-${index}`}
-                fill
-                unoptimized
-                className='object-cover'
-              />
-
-              <div className='absolute bottom-0 left-0 right-0 h-2 bg-white/50'>
-                <div
-                  className={`h-full transition-all ${
-                    item.status === 'success'
-                      ? 'bg-green-500'
-                      : item.status === 'error'
-                        ? 'bg-red-500'
-                        : 'bg-blue-500'
-                  }`}
-                  style={{ width: `${item.progress}%` }}
+          {/* thumbnail preview */}
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mt-4'>
+            {uploadStatuses.map((item, index) => (
+              <div key={index} className='relative w-full aspect-[4/3] rounded overflow-hidden shadow'>
+                <Image
+                  src={item.preview}
+                  alt={`preview-${index}`}
+                  fill
+                  unoptimized
+                  className='object-cover'
                 />
+
+                <div className='absolute bottom-0 left-0 right-0 h-2 bg-white/50'>
+                  <div
+                    className={`h-full transition-all ${
+                      item.status === 'success'
+                        ? 'bg-green-500'
+                        : item.status === 'error'
+                          ? 'bg-red-500'
+                          : 'bg-blue-500'
+                    }`}
+                    style={{ width: `${item.progress}%` }}
+                  />
+                </div>
+
+                <p className='text-sm mt-1'>
+                  {item.status === 'waiting' && 'Waiting for upload'}
+                  {item.status === 'uploading' && `Uploading... ${item.progress}%`}
+                  {item.status === 'success' && '✅ Uploaded successfully'}
+                  {item.status === 'error' && '❌ Upload failed'}
+                </p>
               </div>
+            ))}
+          </div>
+        </form>
 
-              <p className='text-sm mt-1'>
-                {item.status === 'waiting' && 'Waiting for upload'}
-                {item.status === 'uploading' && `Uploading... ${item.progress}%`}
-                {item.status === 'success' && '✅ Uploaded successfully'}
-                {item.status === 'error' && '❌ Upload failed'}
-              </p>
-            </div>
-          ))}
-        </div>
-      </form>
-
-      {/*{error && <p className='text-red-600'>{error}</p>}*/}
-    </main>
-  )
+        {/*{error && <p className='text-red-600'>{error}</p>}*/}
+      </main>
+      <Toaster richColors/>
+    </div>)
 }
