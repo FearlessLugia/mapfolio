@@ -32,13 +32,13 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
             />
 
             <div className='absolute bottom-0 left-0 right-0 bg-black/60 text-white text-sm p-2'>
-              {(photo.photoCity || photo.photoCountry) && (
-                <p className='truncate'>
-                  {photo.photoCity ?? ''}
-                  {photo.photoCity && photo.photoCountry ? ', ' : ''}
-                  {photo.photoCountry ?? ''}
-                </p>
-              )}
+              <p className='truncate'>
+                {photo.photoCity || photo.photoCountry
+                  ? `${photo.photoCity ?? ''}${
+                    photo.photoCity && photo.photoCountry ? ', ' : ''
+                  }${photo.photoCountry ?? ''}`
+                  : 'Mysterious Place...'}
+              </p>
             </div>
           </div>
         ))}
@@ -46,11 +46,17 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
 
       {/* Dialog for the big/full image */}
       <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className='max-w-2xl'>
+        <DialogContent className='max-w-2xl md:max-w-4xl lg:max-w-6xl'>
           {selectedPhoto && (
             <>
               <DialogHeader>
-                <DialogTitle>{selectedPhoto.photoName}</DialogTitle>
+                <DialogTitle>
+                  {selectedPhoto.photoCity || selectedPhoto.photoCountry
+                    ? `${selectedPhoto.photoCity ?? ''}${
+                      selectedPhoto.photoCity && selectedPhoto.photoCountry ? ', ' : ''
+                    }${selectedPhoto.photoCountry ?? ''}`
+                    : 'Mysterious Place...'}
+                </DialogTitle>
               </DialogHeader>
               <div className='relative w-full aspect-video overflow-hidden rounded'>
                 <Image

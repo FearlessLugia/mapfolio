@@ -10,15 +10,6 @@ import Image from 'next/image'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!
 
-type PhotoFeatureProps = {
-  id: number
-  photoName: string
-  /** The original image URL for large display. */
-  originalUrl: string
-  /** The thumbnail URL (for markers, cluster gallery). */
-  thumbnailUrl: string
-}
-
 /**
  * Shows a map with cluster markers. Clicking:
  * - A cluster marker => open main Dialog with a grid of thumbnails.
@@ -36,229 +27,219 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
 
   // Main dialog: either shows single or cluster gallery
   const [dialogOpen, setDialogOpen] = useState(false)
-  // The array of photos (1 or more) displayed in the main dialog
-  const [selectedPhotos, setSelectedPhotos] = useState<PhotoFeatureProps[]>([])
+  const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([])
 
   // Photo detail dialog (the big/lightbox version)
   const [photoDetailOpen, setPhotoDetailOpen] = useState(false)
-  // The single photo currently shown in large format
-  const [photoDetail, setPhotoDetail] = useState<PhotoFeatureProps | null>(null)
+  const [photoDetail, setPhotoDetail] = useState<Photo | null>(null)
 
-  /**
-   * If the user closes the main dialog, also close the photo detail
-   */
+  // If user closes the main dialog, also close the photo detail
   const handleMainDialogOpenChange = (open: boolean) => {
     setDialogOpen(open)
     if (!open) {
-      // Close the big photo if the user closes the cluster/single dialog
       setPhotoDetailOpen(false)
       setPhotoDetail(null)
     }
   }
 
-  /**
-   * Helper: open the big-photo dialog for a single photo
-   */
-  const showPhotoDetail = (photo: PhotoFeatureProps) => {
+  // Opens the big-photo dialog for a single photo
+  const showPhotoDetail = (photo: Photo) => {
     setPhotoDetail(photo)
     setPhotoDetailOpen(true)
   }
 
   useEffect(() => {
-    const fetchThumbnails = async () => {
-      if (!mapContainer.current) return
+    if (!mapContainer.current) return
 
-      const map = new mapboxgl.Map({
-        container: mapContainer.current,
-        center: [2, 48],
-        zoom: 3
-      })
-      mapRef.current = map
+    const map = new mapboxgl.Map({
+      container: mapContainer.current,
+      center: [2, 48],
+      zoom: 3
+    })
+    mapRef.current = map
 
-      // Build the GeoJSON with both originalUrl & thumbnailUrl in properties.
-      const geojson: FeatureCollection<Point, PhotoFeatureProps> = {
-        type: 'FeatureCollection',
-        features: photos
-          .filter((p) => p.photoLocation)
-          .map((p) => {
-            const { latitude, longitude } = p.photoLocation!
-            return {
-              type: 'Feature',
-              properties: {
-                id: p.id,
-                photoName: p.photoName,
-                originalUrl: p.url,       // Make sure p.url is your "large" image
-                thumbnailUrl: p.thumbnailUrl
-              },
-              geometry: {
-                type: 'Point',
-                coordinates: [longitude, latitude]
-              }
+    // Build the GeoJSON with both originalUrl & thumbnailUrl in properties.
+    const geojson: FeatureCollection<Point, Photo> = {
+      type: 'FeatureCollection',
+      features: photos
+        .filter((p) => p.photoLocation)
+        .map((p) => {
+          const { latitude, longitude } = p.photoLocation!
+          return {
+            type: 'Feature',
+            properties: {
+              id: p.id,
+              photoName: p.photoName,
+              url: p.url,
+              thumbnailUrl: p.thumbnailUrl,
+              photoCity: p.photoCity,
+              photoCountry: p.photoCountry
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [longitude, latitude]
             }
-          })
-      }
-
-      map.on('load', () => {
-        map.addSource('photos', {
-          type: 'geojson',
-          data: geojson,
-          cluster: true,
-          clusterRadius: 60,
-          clusterMaxZoom: 14
-        })
-
-        // Create a dummy layer to detect cluster features
-        map.addLayer({
-          id: 'photo-cluster-dummy',
-          type: 'circle',
-          source: 'photos',
-          filter: ['has', 'point_count'],
-          paint: {
-            'circle-opacity': 0,
-            'circle-radius': 0
           }
         })
-
-        const source = map.getSource('photos') as mapboxgl.GeoJSONSource
-        let markers: mapboxgl.Marker[] = []
-
-        // Render cluster markers & single photo markers
-        const renderClusters = async () => {
-          // Remove old markers
-          markers.forEach((m) => m.remove())
-          markers = []
-
-          // Find all cluster features
-          const clusterFeatures = map.queryRenderedFeatures({
-            layers: ['photo-cluster-dummy']
-          })
-          const clusterIds = clusterFeatures.map((f) => f.properties?.cluster_id) as number[]
-
-          // Keep track of all photos that belong to any cluster
-          const clusteredIdSet = new Set<number>()
-          // Map from clusterId => array of photos inside that cluster
-          const clusterPhotosMap = new Map<number, PhotoFeatureProps[]>()
-
-          // 1. Gather cluster leaves
-          await Promise.all(
-            clusterIds.map(
-              (clusterId) =>
-                new Promise<void>((resolve) => {
-                  source.getClusterLeaves(clusterId, 100, 0, (err, leaves) => {
-                    if (!err && Array.isArray(leaves) && leaves.length > 0) {
-                      const photosInCluster: PhotoFeatureProps[] = []
-                      leaves.forEach((leaf) => {
-                        if (leaf.properties?.id) {
-                          clusteredIdSet.add(leaf.properties.id)
-                          photosInCluster.push(leaf.properties as PhotoFeatureProps)
-                        }
-                      })
-                      clusterPhotosMap.set(clusterId, photosInCluster)
-                    }
-                    resolve()
-                  })
-                })
-            )
-          )
-
-          // 2. Render cluster markers
-          clusterFeatures.forEach((f) => {
-            const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number]
-            const clusterId = f.properties?.cluster_id
-            const clusterCount = f.properties?.point_count
-            if (typeof clusterId !== 'number') return
-
-            const clusterPhotos = clusterPhotosMap.get(clusterId)
-            if (!clusterPhotos || clusterPhotos.length === 0) return
-
-            // Use the first photo's thumbnail as the marker background
-            const sampleUrl = clusterPhotos[0].thumbnailUrl
-
-            const el = document.createElement('div')
-            el.className =
-              'relative w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center'
-            el.style.backgroundImage = `url(${sampleUrl})`
-
-            // Show the cluster count
-            const badge = document.createElement('div')
-            badge.className =
-              'absolute bottom-0 left-0 text-xs px-2 py-0.5 bg-white/90 text-black rounded-tr-md font-semibold'
-            badge.textContent = String(clusterCount)
-            el.appendChild(badge)
-
-            // Clicking the cluster => open a gallery with these photos
-            el.addEventListener('click', () => {
-              setSelectedPhotos(clusterPhotos)
-              setDialogOpen(true)
-            })
-
-            const marker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map)
-            markers.push(marker)
-          })
-
-          // 3. Render individual (non-clustered) markers
-          geojson.features.forEach((feature) => {
-            const { id, photoName, originalUrl, thumbnailUrl } = feature.properties
-            if (clusteredIdSet.has(id)) return
-
-            const coords = feature.geometry.coordinates
-            const el = document.createElement('div')
-            el.className =
-              'w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center cursor-pointer'
-            el.style.backgroundImage = `url(${thumbnailUrl})`
-
-            // Clicking a single marker => show the single photo in the main dialog (but large!)
-            el.addEventListener('click', () => {
-              setSelectedPhotos([{ id, photoName, originalUrl, thumbnailUrl }])
-              setDialogOpen(true)
-            })
-
-            const marker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map)
-            markers.push(marker)
-          })
-        }
-
-        map.on('moveend', renderClusters)
-        map.on('zoomend', renderClusters)
-        map.once('idle', renderClusters)
-      })
     }
 
-    fetchThumbnails()
+    map.on('load', () => {
+      map.addSource('photos', {
+        type: 'geojson',
+        data: geojson,
+        cluster: true,
+        clusterRadius: 60,
+        clusterMaxZoom: 14
+      })
+
+      // Create a dummy layer to detect cluster features
+      map.addLayer({
+        id: 'photo-cluster-dummy',
+        type: 'circle',
+        source: 'photos',
+        filter: ['has', 'point_count'],
+        paint: { 'circle-opacity': 0, 'circle-radius': 0 }
+      })
+
+      const source = map.getSource('photos') as mapboxgl.GeoJSONSource
+      let markers: mapboxgl.Marker[] = []
+
+      // Render cluster markers & single photo markers
+      const renderClusters = async () => {
+        // Remove old markers
+        markers.forEach((m) => m.remove())
+        markers = []
+
+        // Find all cluster features
+        const clusterFeatures = map.queryRenderedFeatures({
+          layers: ['photo-cluster-dummy']
+        })
+        const clusterIds = clusterFeatures.map((f) => f.properties?.cluster_id) as number[]
+
+        // Keep track of all photos that belong to any cluster
+        const clusteredIdSet = new Set<number>()
+        // Map from clusterId => array of photos inside that cluster
+        const clusterPhotosMap = new Map<number, Photo[]>()
+
+        // 1. Gather cluster leaves
+        await Promise.all(
+          clusterIds.map(
+            (clusterId) =>
+              new Promise<void>((resolve) => {
+                source.getClusterLeaves(clusterId, 100, 0, (err, leaves) => {
+                  if (!err && Array.isArray(leaves) && leaves.length > 0) {
+                    const photosInCluster: Photo[] = []
+                    leaves.forEach((leaf) => {
+                      if (leaf.properties?.id) {
+                        clusteredIdSet.add(leaf.properties.id)
+                        photosInCluster.push(leaf.properties as Photo)
+                      }
+                    })
+                    clusterPhotosMap.set(clusterId, photosInCluster)
+                  }
+                  resolve()
+                })
+              })
+          )
+        )
+
+        // 2. Render cluster markers
+        clusterFeatures.forEach((f) => {
+          const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number]
+          const clusterId = f.properties?.cluster_id
+          const clusterCount = f.properties?.point_count
+          if (typeof clusterId !== 'number') return
+
+          const clusterPhotos = clusterPhotosMap.get(clusterId)
+          if (!clusterPhotos || clusterPhotos.length === 0) return
+
+          // Use the first photo's thumbnail as the marker background
+          const sampleUrl = clusterPhotos[0].thumbnailUrl
+
+          const el = document.createElement('div')
+          el.className =
+            'relative w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center'
+          el.style.backgroundImage = `url(${sampleUrl})`
+
+          // Show the cluster count
+          const badge = document.createElement('div')
+          badge.className =
+            'absolute bottom-0 left-0 text-xs px-2 py-0.5 bg-white/90 text-black rounded-tr-md font-semibold'
+          badge.textContent = String(clusterCount)
+          el.appendChild(badge)
+
+          // Clicking the cluster => open a gallery with these photos
+          el.addEventListener('click', () => {
+            setSelectedPhotos(clusterPhotos)
+            setDialogOpen(true)
+          })
+
+          const marker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map)
+          markers.push(marker)
+        })
+
+        // 3. Render individual (non-clustered) markers
+        geojson.features.forEach((feature) => {
+          const { id, photoName, url, thumbnailUrl, photoCity, photoCountry } = feature.properties
+          if (clusteredIdSet.has(id)) return
+
+          const coords = feature.geometry.coordinates
+          const el = document.createElement('div')
+          el.className =
+            'w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center cursor-pointer'
+          el.style.backgroundImage = `url(${thumbnailUrl})`
+
+          // Clicking a single marker => show the single photo in the main dialog (but large!)
+          el.addEventListener('click', () => {
+            setSelectedPhotos([{ id, photoName, url, thumbnailUrl, photoCity, photoCountry }])
+            setDialogOpen(true)
+          })
+
+          const marker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map)
+          markers.push(marker)
+        })
+      }
+
+      map.on('moveend', renderClusters)
+      map.on('zoomend', renderClusters)
+      map.once('idle', renderClusters)
+    })
 
     return () => {
-      mapRef.current?.remove()
+      map.remove()
     }
-  }, [])
+  }, [photos])
 
   return (
     <>
       <div ref={mapContainer} className='w-full h-screen'/>
 
-      {/* --- MAIN DIALOG (Cluster Gallery or Single Photo) --- */}
+      {/* MAIN DIALOG */}
       <Dialog open={dialogOpen} onOpenChange={handleMainDialogOpenChange}>
-        <DialogContent className='max-w-xl md:max-w-3xl lg:max-w-4xl'>
+        <DialogContent className='max-w-2xl md:max-w-4xl lg:max-w-6xl'>
           <DialogHeader>
             {selectedPhotos.length === 1 ? (
-              <DialogTitle>{selectedPhotos[0].photoName}</DialogTitle>
+              <DialogTitle>
+                {selectedPhotos[0].photoCity || selectedPhotos[0].photoCountry
+                  ? `${selectedPhotos[0].photoCity ?? ''}${
+                    selectedPhotos[0].photoCity && selectedPhotos[0].photoCountry ? ', ' : ''
+                  }${selectedPhotos[0].photoCountry ?? ''}`
+                  : selectedPhotos[0].photoName ?? 'Mysterious Photo'}
+              </DialogTitle>
             ) : (
               <DialogTitle>Cluster Gallery</DialogTitle>
             )}
           </DialogHeader>
 
-          {/*
-            If only 1 photo => show its ORIGINAL URL right away
-            (instead of the thumbnail).
-            Clicking it can still open the photoDetail dialog if desired.
-          */}
+          {/* Single Photo => show large image right away. Clicking => detail dialog */}
           {selectedPhotos.length === 1 ? (
             <div
               className='relative w-full aspect-video overflow-hidden rounded cursor-pointer'
               onClick={() => showPhotoDetail(selectedPhotos[0])}
             >
               <Image
-                src={selectedPhotos[0].originalUrl}
-                alt={selectedPhotos[0].photoName}
+                src={selectedPhotos[0].url}
+                alt={selectedPhotos[0].photoName ?? 'Photo'}
                 fill
                 className='object-contain'
                 priority
@@ -274,7 +255,7 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
                 >
                   <Image
                     src={photo.thumbnailUrl}
-                    alt={photo.photoName}
+                    alt={photo.photoName ?? ''}
                     fill
                     className='object-cover'
                   />
@@ -285,18 +266,24 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
         </DialogContent>
       </Dialog>
 
-      {/* --- PHOTO DETAIL DIALOG (Large/Original Image) --- */}
+      {/* PHOTO DETAIL DIALOG */}
       <Dialog open={photoDetailOpen} onOpenChange={setPhotoDetailOpen}>
-        <DialogContent className='max-w-2xl md:max-w-3xl lg:max-w-4xl'>
+        <DialogContent className='max-w-2xl md:max-w-4xl lg:max-w-6xl'>
           {photoDetail && (
             <>
               <DialogHeader>
-                <DialogTitle>{photoDetail.photoName}</DialogTitle>
+                <DialogTitle>
+                  {photoDetail.photoCity || photoDetail.photoCountry
+                    ? `${photoDetail.photoCity ?? ''}${
+                      photoDetail.photoCity && photoDetail.photoCountry ? ', ' : ''
+                    }${photoDetail.photoCountry ?? ''}`
+                    : 'Mysterious Place...'}
+                </DialogTitle>
               </DialogHeader>
               <div className='relative w-full aspect-video overflow-hidden rounded'>
                 <Image
-                  src={photoDetail.originalUrl}
-                  alt={photoDetail.photoName}
+                  src={photoDetail.url}
+                  alt={photoDetail.photoName ?? ''}
                   fill
                   className='object-contain'
                   priority
