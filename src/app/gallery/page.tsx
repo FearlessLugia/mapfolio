@@ -11,7 +11,7 @@ export default async function GalleryPage() {
   const photos = await res.json()
 
   return (
-    <main className='p-6'>
+    <main className='px-6 pb-6 pt-0'>
       <h1 className='text-2xl font-bold mb-6'>All Photos</h1>
       {/* Render the client component, pass the photos as props */}
       <Gallery photos={photos}/>

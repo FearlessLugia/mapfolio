@@ -132,7 +132,7 @@ export default function UploadPage() {
 
   return (
     <div>
-      <main className='p-6'>
+      <main className='px-6 pb-6 pt-0'>
         <h1 className='text-2xl font-bold mb-6'>Upload to Mapfolio</h1>
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div className='flex justify-between'>
@@ -146,7 +146,7 @@ export default function UploadPage() {
               onChange={handleFileChange}
             />
             {/* Button that triggers the hidden file input */}
-            <Button onClick={handleClick}>Select Files</Button>
+            <Button variant="outline" onClick={handleClick} >Select Files</Button>
 
             <Button type='submit'>Upload</Button>
           </div>
