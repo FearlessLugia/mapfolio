@@ -246,21 +246,23 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
               />
             </div>
           ) : (
-            <div className='grid gap-4 grid-cols-2 md:grid-cols-3'>
-              {selectedPhotos.map((photo) => (
-                <div
-                  key={photo.id}
-                  className='relative w-full aspect-[4/3] overflow-hidden rounded shadow cursor-pointer'
-                  onClick={() => showPhotoDetail(photo)}
-                >
-                  <Image
-                    src={photo.thumbnailUrl}
-                    alt={`a photo in ${photo.photoCountry ?? 'Mysterious Place...'}`}
-                    fill
-                    className='object-cover'
-                  />
-                </div>
-              ))}
+            <div className='max-h-[80vh] overflow-y-auto'>
+              <div className='grid gap-4 grid-cols-2 md:grid-cols-3'>
+                {selectedPhotos.map((photo) => (
+                  <div
+                    key={photo.id}
+                    className='relative w-full aspect-[4/3] overflow-hidden rounded shadow cursor-pointer'
+                    onClick={() => showPhotoDetail(photo)}
+                  >
+                    <Image
+                      src={photo.thumbnailUrl}
+                      alt={`a photo in ${photo.photoCountry ?? 'Mysterious Place...'}`}
+                      fill
+                      className='object-cover'
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </DialogContent>
