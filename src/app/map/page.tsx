@@ -8,6 +8,12 @@ import type { FeatureCollection, Point } from 'geojson'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!
 
+type PhotoFeatureProps = {
+  id: number
+  photoName: string
+  photoUrl: string
+}
+
 export default function PhotoMapPage() {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
@@ -21,40 +27,18 @@ export default function PhotoMapPage() {
 
       const map = new mapboxgl.Map({
         container: mapContainer.current,
-        // center: [-79.39, 43.65],
         center: [2, 48],
         zoom: 3
       })
 
       mapRef.current = map
 
-      // const geojson = {
-      //   type: 'FeatureCollection',
-      //   features: photos
-      //     .filter((p) => p.photoLocation)
-      //     .map((p) => {
-      //       const loc = p.photoLocation as { latitude: number; longitude: number }
-      //
-      //       return {
-      //         type: 'Feature',
-      //         properties: {
-      //           id: p.id,
-      //           photoName: p.photoName,
-      //           photoUrl: p.thumbnailUrl
-      //         },
-      //         geometry: {
-      //           type: 'Point',
-      //           coordinates: [loc.longitude, loc.latitude]
-      //         }
-      //       }
-      //     })
-      // }
-
-      const geojson: FeatureCollection<Point, { id: number; photoName: string; photoUrl: string }> = {
+      const geojson: FeatureCollection<Point, PhotoFeatureProps> = {
         type: 'FeatureCollection',
         features: photos
           .filter((p) => p.photoLocation)
           .map((p) => {
+            // Force the type so TypeScript stops complaining about optional location
             const loc = p.photoLocation as { latitude: number; longitude: number }
 
             return {
@@ -96,18 +80,24 @@ export default function PhotoMapPage() {
         let markers: mapboxgl.Marker[] = []
 
         const renderClusters = async () => {
+          // Clear existing markers first
           markers.forEach((m) => m.remove())
           markers = []
 
+          // Query all cluster features
           const clusterFeatures = map.queryRenderedFeatures({
             layers: ['photo-cluster-dummy']
           })
-          const clusterIds = clusterFeatures.map((f) => f.properties!.cluster_id)
 
-          const clusteredIdSet = new Set<string>()
+          // Extract cluster IDs from the features we got
+          const clusterIds = clusterFeatures.map((f) => f.properties?.cluster_id) as number[]
+
+          // Keep track of all photo IDs that belong to any cluster
+          const clusteredIdSet = new Set<number>()
+          // Keep track of one “sample” feature for each cluster (for cluster icon)
           const clusterMap = new Map<number, mapboxgl.MapboxGeoJSONFeature>()
 
-          // Step 1: get cluster leaves
+          // Step 1: Retrieve leaves for each cluster so we know which photos are in it
           await Promise.all(
             clusterIds.map(
               (clusterId) =>
@@ -116,9 +106,10 @@ export default function PhotoMapPage() {
                     if (!err && Array.isArray(leaves) && leaves.length > 0) {
                       leaves.forEach((leaf) => {
                         if (leaf.properties && 'id' in leaf.properties) {
-                          clusteredIdSet.add(leaf.properties.id)
+                          clusteredIdSet.add(leaf.properties.id as number)
                         }
                       })
+                      // Use the first leaf as the sample for the cluster marker
                       clusterMap.set(clusterId, leaves[0] as mapboxgl.MapboxGeoJSONFeature)
                     }
                     resolve()
@@ -127,15 +118,15 @@ export default function PhotoMapPage() {
             )
           )
 
-          // Step 2: render cluster markers
+          // Step 2: Render the cluster markers
           clusterFeatures.forEach((f) => {
             const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number]
-            const clusterId = f.properties!.cluster_id
-            const clusterCount = f.properties!.point_count
+            const clusterId = f.properties?.cluster_id
+            const clusterCount = f.properties?.point_count
 
             const sample = clusterMap.get(clusterId)
             if (!sample || !sample.properties) return
-            const sampleUrl = sample.properties.photoUrl
+            const sampleUrl = sample.properties.photoUrl as string
 
             const el = document.createElement('div')
             el.className =
@@ -146,36 +137,36 @@ export default function PhotoMapPage() {
             badge.className =
               'absolute bottom-0 left-0 text-xs px-2 py-0.5 bg-white/90 text-black rounded-tr-md font-semibold'
             badge.textContent = String(clusterCount)
-
             el.appendChild(badge)
 
             el.addEventListener('click', () => {
-              source.getClusterExpansionZoom(clusterId, (err) => {
-                if (err) return
+              source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+                if (err || typeof zoom !== 'number') return
 
+                // Zoom in on the cluster
+                map.easeTo({ center: coords, zoom })
+
+                // Re‐render after the map stops moving
                 map.once('moveend', () => {
                   renderClusters()
                 })
-
-                // Wait for the map to finish moving before zooming in
+                // Another re‐render after the zoom finishes
                 map.once('moveend', () => {
-                  // second moveend event is triggered after zooming in
                   renderClusters()
                 })
               })
             })
 
-
-            const marker = new mapboxgl.Marker(el)
-              .setLngLat(coords)
-              .addTo(map)
+            const marker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map)
             markers.push(marker)
           })
 
-          // Step 3: render individual markers
+          // Step 3: Render individual (non‐clustered) markers
           geojson.features.forEach((feature) => {
-            if (clusteredIdSet.has(String(feature.properties.id))) return
+            // If this feature’s ID is in a cluster, skip rendering an individual marker
+            if (clusteredIdSet.has(feature.properties.id)) return
 
+            const coords = feature.geometry.coordinates
             const el = document.createElement('div')
             el.className =
               'w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center cursor-pointer'
@@ -185,20 +176,14 @@ export default function PhotoMapPage() {
               alert(`📸 ${feature.properties.photoName}`)
             })
 
-            const coords = (feature.geometry as GeoJSON.Point).coordinates as [number, number]
-            const marker = new mapboxgl.Marker(el)
-              .setLngLat(coords)
-              .addTo(map)
+            const marker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map)
             markers.push(marker)
           })
         }
 
         map.on('moveend', renderClusters)
         map.on('zoomend', renderClusters)
-
-        map.once('idle', () => {
-          renderClusters()
-        })
+        map.once('idle', renderClusters)
       })
     }
 
