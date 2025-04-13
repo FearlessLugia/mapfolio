@@ -239,7 +239,7 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
             >
               <Image
                 src={selectedPhotos[0].url}
-                alt={selectedPhotos[0].photoName ?? 'Photo'}
+                alt={`a photo in ${selectedPhotos[0].photoCountry ?? 'Mysterious Place...'}`}
                 fill
                 className='object-contain'
                 priority
@@ -255,7 +255,7 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
                 >
                   <Image
                     src={photo.thumbnailUrl}
-                    alt={photo.photoName ?? ''}
+                    alt={`a photo in ${photo.photoCountry ?? 'Mysterious Place...'}`}
                     fill
                     className='object-cover'
                   />
@@ -283,7 +283,7 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
               <div className='relative w-full aspect-video overflow-hidden rounded'>
                 <Image
                   src={photoDetail.url}
-                  alt={photoDetail.photoName ?? ''}
+                  alt={`a photo in ${photoDetail.photoCountry ?? 'Mysterious Place...'}`}
                   fill
                   className='object-contain'
                   priority

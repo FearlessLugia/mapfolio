@@ -25,7 +25,7 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
           >
             <Image
               src={photo.thumbnailUrl}
-              alt={photo.photoName ?? ''}
+              alt={`a photo in ${photo.photoCountry ?? 'Mysterious Place...'}`}
               fill
               className='object-cover'
               loading='lazy'
@@ -61,7 +61,7 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
               <div className='relative w-full aspect-video overflow-hidden rounded'>
                 <Image
                   src={selectedPhoto.url}
-                  alt={selectedPhoto.photoName ?? ''}
+                  alt={`a photo in ${selectedPhoto.photoCountry ?? 'Mysterious Place...'}`}
                   fill
                   className='object-contain'
                   priority
