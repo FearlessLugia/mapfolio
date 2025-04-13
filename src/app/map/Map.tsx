@@ -247,7 +247,14 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
             </div>
           ) : (
             <div className='max-h-[80vh] overflow-y-auto'>
-              <div className='grid gap-4 grid-cols-2 md:grid-cols-3'>
+              <div
+                // If only 2 photos, show them side by side. Otherwise, show 3 columns.
+                className={`grid gap-4 ${
+                  selectedPhotos.length === 2
+                    ? 'grid-cols-2'
+                    : 'grid-cols-2 md:grid-cols-3'
+                }`}
+              >
                 {selectedPhotos.map((photo) => (
                   <div
                     key={photo.id}
