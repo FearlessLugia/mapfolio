@@ -10,6 +10,22 @@ import Image from 'next/image'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!
 
+interface LatLon {
+  latitude: number
+  longitude: number
+}
+
+// Extend the Photo type so that photoLocation is known to be LatLon
+type PhotoWithLocation = Omit<Photo, 'photoLocation'> & {
+  photoLocation: LatLon
+}
+
+// Pick just the fields you are actually using
+type MapPhotoProps = Pick<
+  Photo,
+  'id' | 'photoName' | 'url' | 'thumbnailUrl' | 'photoCity' | 'photoCountry'
+>
+
 /**
  * Shows a map with cluster markers. Clicking:
  * - A cluster marker => open main Dialog with a grid of thumbnails.
@@ -21,17 +37,17 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!
  * - If multiple photos (cluster), we show a grid of thumbnails. Clicking any thumbnail
  *   opens the second Dialog with the large original image.
  */
-export default function MapPage({ photos }: { photos: Photo[] }) {
+export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
 
   // Main dialog: either shows single or cluster gallery
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedPhotos, setSelectedPhotos] = useState<Photo[]>([])
+  const [selectedPhotos, setSelectedPhotos] = useState<MapPhotoProps[]>([])
 
   // Photo detail dialog (the big/lightbox version)
   const [photoDetailOpen, setPhotoDetailOpen] = useState(false)
-  const [photoDetail, setPhotoDetail] = useState<Photo | null>(null)
+  const [photoDetail, setPhotoDetail] = useState<MapPhotoProps | null>(null)
 
   // If user closes the main dialog, also close the photo detail
   const handleMainDialogOpenChange = (open: boolean) => {
@@ -43,7 +59,7 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
   }
 
   // Opens the big-photo dialog for a single photo
-  const showPhotoDetail = (photo: Photo) => {
+  const showPhotoDetail = (photo: MapPhotoProps) => {
     setPhotoDetail(photo)
     setPhotoDetailOpen(true)
   }
@@ -59,7 +75,7 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
     mapRef.current = map
 
     // Build the GeoJSON with both originalUrl & thumbnailUrl in properties.
-    const geojson: FeatureCollection<Point, Photo> = {
+    const geojson: FeatureCollection<Point, MapPhotoProps> = {
       type: 'FeatureCollection',
       features: photos
         .filter((p) => p.photoLocation)
@@ -119,7 +135,7 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
         // Keep track of all photos that belong to any cluster
         const clusteredIdSet = new Set<number>()
         // Map from clusterId => array of photos inside that cluster
-        const clusterPhotosMap = new Map<number, Photo[]>()
+        const clusterPhotosMap = new Map<number, MapPhotoProps[]>()
 
         // 1. Gather cluster leaves
         await Promise.all(
@@ -128,11 +144,11 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
               new Promise<void>((resolve) => {
                 source.getClusterLeaves(clusterId, 100, 0, (err, leaves) => {
                   if (!err && Array.isArray(leaves) && leaves.length > 0) {
-                    const photosInCluster: Photo[] = []
+                    const photosInCluster: MapPhotoProps[] = []
                     leaves.forEach((leaf) => {
                       if (leaf.properties?.id) {
                         clusteredIdSet.add(leaf.properties.id)
-                        photosInCluster.push(leaf.properties as Photo)
+                        photosInCluster.push(leaf.properties as MapPhotoProps)
                       }
                     })
                     clusterPhotosMap.set(clusterId, photosInCluster)
@@ -183,7 +199,7 @@ export default function MapPage({ photos }: { photos: Photo[] }) {
           const { id, photoName, url, thumbnailUrl, photoCity, photoCountry } = feature.properties
           if (clusteredIdSet.has(id)) return
 
-          const coords = feature.geometry.coordinates
+          const coords = feature.geometry.coordinates as [number, number]
           const el = document.createElement('div')
           el.className =
             'w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center cursor-pointer'
