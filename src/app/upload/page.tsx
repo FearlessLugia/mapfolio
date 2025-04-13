@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { Button } from '@/components/ui/button'
 
 type UploadStatus = {
   file: File
@@ -108,18 +109,31 @@ export default function UploadPage() {
     )
   }
 
+  // Programmatically trigger the hidden file input:
+  const handleClick = () => {
+    // We can directly get the input with getElementById or a ref
+    document.getElementById('hidden-file-input')?.click()
+  }
 
   return (
-    <>
-      <h1 className='text-5xl font-bold mb-8'>Upload to Mapfolio</h1>
+    <main className='p-6'>
+      <h1 className='text-2xl font-bold mb-6'>Upload to Mapfolio</h1>
       <form onSubmit={handleSubmit} className='space-y-4'>
-        <input
-          type='file'
-          multiple
-          onChange={handleFileChange}
-          accept='image/*'
-          className='file:p-2 file:rounded file:border-0 file:bg-gray-200'
-        />
+        <div className='flex justify-between'>
+          {/* Hidden file input */}
+          <input
+            id='hidden-file-input'
+            type='file'
+            multiple
+            accept='image/*'
+            className='hidden'
+            onChange={handleFileChange}
+          />
+          {/* Button that triggers the hidden file input */}
+          <Button onClick={handleClick}>Select Files</Button>
+
+          <Button type='submit'>Upload</Button>
+        </div>
 
         {/* thumbnail preview */}
         <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mt-4'>
@@ -155,16 +169,9 @@ export default function UploadPage() {
             </div>
           ))}
         </div>
-
-        <button
-          type='submit'
-          className='p-2 bg-gray-800 text-white rounded hover:bg-gray-500'
-        >
-          Upload
-        </button>
       </form>
 
       {/*{error && <p className='text-red-600'>{error}</p>}*/}
-    </>
+    </main>
   )
 }
