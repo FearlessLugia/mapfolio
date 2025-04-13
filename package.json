@@ -7,7 +7,9 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "npx vercel"
+    "studio": "npx prisma studio",
+    "db:push": "npx prisma db push",
+    "deploy": "npx vercel --prod"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.782.0",
