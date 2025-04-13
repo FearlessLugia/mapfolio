@@ -1,28 +1,39 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { Photo } from '@prisma/client'
 import type { FeatureCollection, Point } from 'geojson'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import Image from 'next/image'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!
 
 type PhotoFeatureProps = {
   id: number
   photoName: string
-  photoUrl: string
+  /** The original image URL (for single-photo view). */
+  originalUrl: string
+  /** The thumbnail URL (for markers and for cluster gallery). */
+  thumbnailUrl: string
 }
 
 export default function PhotoMapPage() {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
 
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false)
+  // We'll store either a single photo or multiple photos in this array
+  const [selectedPhotos, setSelectedPhotos] = useState<PhotoFeatureProps[]>([])
+
   useEffect(() => {
     const fetchThumbnails = async () => {
       const res = await fetch('/api/photo')
       const photos: Photo[] = await res.json()
 
+      // Ensure our container is rendered
       if (!mapContainer.current) return
 
       const map = new mapboxgl.Map({
@@ -30,27 +41,26 @@ export default function PhotoMapPage() {
         center: [2, 48],
         zoom: 3
       })
-
       mapRef.current = map
 
+      // Build a GeoJSON with originalUrl & thumbnailUrl in properties
       const geojson: FeatureCollection<Point, PhotoFeatureProps> = {
         type: 'FeatureCollection',
         features: photos
           .filter((p) => p.photoLocation)
           .map((p) => {
-            // Force the type so TypeScript stops complaining about optional location
-            const loc = p.photoLocation as { latitude: number; longitude: number }
-
+            const { latitude, longitude } = p.photoLocation!
             return {
               type: 'Feature',
               properties: {
                 id: p.id,
                 photoName: p.photoName,
-                photoUrl: p.thumbnailUrl
+                originalUrl: p.url,
+                thumbnailUrl: p.thumbnailUrl
               },
               geometry: {
                 type: 'Point',
-                coordinates: [loc.longitude, loc.latitude]
+                coordinates: [longitude, latitude]
               }
             }
           })
@@ -65,6 +75,7 @@ export default function PhotoMapPage() {
           clusterMaxZoom: 14
         })
 
+        // A dummy layer for detecting cluster features
         map.addLayer({
           id: 'photo-cluster-dummy',
           type: 'circle',
@@ -79,38 +90,44 @@ export default function PhotoMapPage() {
         const source = map.getSource('photos') as mapboxgl.GeoJSONSource
         let markers: mapboxgl.Marker[] = []
 
+        /**
+         * Render clusters and markers:
+         * - If it's a cluster, open a gallery of all cluster photos (thumbnails).
+         * - If it's a single marker, open a single photo in original size.
+         */
         const renderClusters = async () => {
           // Clear existing markers first
           markers.forEach((m) => m.remove())
           markers = []
 
-          // Query all cluster features
+          // Query all features in the cluster layer
           const clusterFeatures = map.queryRenderedFeatures({
             layers: ['photo-cluster-dummy']
           })
 
-          // Extract cluster IDs from the features we got
+          // The cluster IDs
           const clusterIds = clusterFeatures.map((f) => f.properties?.cluster_id) as number[]
 
-          // Keep track of all photo IDs that belong to any cluster
+          // Keep track of all photos that belong to a cluster
           const clusteredIdSet = new Set<number>()
-          // Keep track of one “sample” feature for each cluster (for cluster icon)
-          const clusterMap = new Map<number, mapboxgl.MapboxGeoJSONFeature>()
+          // We'll store each cluster's photos in a map, so we can show them in the gallery
+          const clusterPhotosMap = new Map<number, PhotoFeatureProps[]>()
 
-          // Step 1: Retrieve leaves for each cluster so we know which photos are in it
+          // Step 1: get cluster leaves
           await Promise.all(
             clusterIds.map(
               (clusterId) =>
                 new Promise<void>((resolve) => {
                   source.getClusterLeaves(clusterId, 100, 0, (err, leaves) => {
                     if (!err && Array.isArray(leaves) && leaves.length > 0) {
+                      const photosInCluster: PhotoFeatureProps[] = []
                       leaves.forEach((leaf) => {
-                        if (leaf.properties && 'id' in leaf.properties) {
-                          clusteredIdSet.add(leaf.properties.id as number)
+                        if (leaf.properties?.id) {
+                          clusteredIdSet.add(leaf.properties.id)
+                          photosInCluster.push(leaf.properties as PhotoFeatureProps)
                         }
                       })
-                      // Use the first leaf as the sample for the cluster marker
-                      clusterMap.set(clusterId, leaves[0] as mapboxgl.MapboxGeoJSONFeature)
+                      clusterPhotosMap.set(clusterId, photosInCluster)
                     }
                     resolve()
                   })
@@ -118,62 +135,57 @@ export default function PhotoMapPage() {
             )
           )
 
-          // Step 2: Render the cluster markers
+          // Step 2: render cluster markers
           clusterFeatures.forEach((f) => {
             const coords = (f.geometry as GeoJSON.Point).coordinates as [number, number]
             const clusterId = f.properties?.cluster_id
             const clusterCount = f.properties?.point_count
+            if (typeof clusterId !== 'number') return
 
-            const sample = clusterMap.get(clusterId)
-            if (!sample || !sample.properties) return
-            const sampleUrl = sample.properties.photoUrl as string
+            const clusterPhotos = clusterPhotosMap.get(clusterId)
+            if (!clusterPhotos || clusterPhotos.length === 0) return
+
+            // Use the first photo's thumbnail in the cluster as the marker's background
+            const sampleUrl = clusterPhotos[0].thumbnailUrl
 
             const el = document.createElement('div')
             el.className =
               'relative w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center'
             el.style.backgroundImage = `url(${sampleUrl})`
 
+            // Show the cluster count
             const badge = document.createElement('div')
             badge.className =
               'absolute bottom-0 left-0 text-xs px-2 py-0.5 bg-white/90 text-black rounded-tr-md font-semibold'
             badge.textContent = String(clusterCount)
             el.appendChild(badge)
 
+            // On click, open a gallery with these cluster photos (thumbnails)
             el.addEventListener('click', () => {
-              source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-                if (err || typeof zoom !== 'number') return
-
-                // Zoom in on the cluster
-                map.easeTo({ center: coords, zoom })
-
-                // Re‐render after the map stops moving
-                map.once('moveend', () => {
-                  renderClusters()
-                })
-                // Another re‐render after the zoom finishes
-                map.once('moveend', () => {
-                  renderClusters()
-                })
-              })
+              setSelectedPhotos(clusterPhotos)
+              setDialogOpen(true)
             })
 
             const marker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map)
             markers.push(marker)
           })
 
-          // Step 3: Render individual (non‐clustered) markers
+          // Step 3: render non‐clustered markers
           geojson.features.forEach((feature) => {
-            // If this feature’s ID is in a cluster, skip rendering an individual marker
-            if (clusteredIdSet.has(feature.properties.id)) return
+            const { id, photoName, originalUrl, thumbnailUrl } = feature.properties
+            // If photo is in a cluster, skip rendering individually
+            if (clusteredIdSet.has(id)) return
 
             const coords = feature.geometry.coordinates
             const el = document.createElement('div')
             el.className =
               'w-[72px] h-[72px] rounded-xl overflow-hidden border-2 border-white shadow-md bg-cover bg-center cursor-pointer'
-            el.style.backgroundImage = `url(${feature.properties.photoUrl})`
+            el.style.backgroundImage = `url(${thumbnailUrl})`
 
+            // On click, open a single‐photo view (original image)
             el.addEventListener('click', () => {
-              alert(`📸 ${feature.properties.photoName}`)
+              setSelectedPhotos([{ id, photoName, originalUrl, thumbnailUrl }])
+              setDialogOpen(true)
             })
 
             const marker = new mapboxgl.Marker(el).setLngLat(coords).addTo(map)
@@ -194,5 +206,51 @@ export default function PhotoMapPage() {
     }
   }, [])
 
-  return <div ref={mapContainer} className='w-full h-screen'/>
+  return (
+    <>
+      <div ref={mapContainer} className='w-full h-screen'/>
+
+      {/* Dialog for single photo or cluster gallery */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className='max-w-xl md:max-w-3xl lg:max-w-4xl'>
+          <DialogHeader>
+            {selectedPhotos.length === 1 ? (
+              <DialogTitle>{selectedPhotos[0].photoName}</DialogTitle>
+            ) : (
+              <DialogTitle>Cluster Gallery</DialogTitle>
+            )}
+          </DialogHeader>
+
+          {/* Single photo => show originalUrl. Multiple => show a gallery of thumbnails */}
+          {selectedPhotos.length === 1 ? (
+            <div className='relative w-full aspect-video overflow-hidden rounded'>
+              <Image
+                src={selectedPhotos[0].originalUrl}
+                alt={selectedPhotos[0].photoName}
+                fill
+                className='object-contain'
+                priority
+              />
+            </div>
+          ) : (
+            <div className='grid gap-4 grid-cols-2 md:grid-cols-3'>
+              {selectedPhotos.map((photo) => (
+                <div
+                  key={photo.id}
+                  className='relative w-full aspect-[4/3] overflow-hidden rounded shadow'
+                >
+                  <Image
+                    src={photo.thumbnailUrl}
+                    alt={photo.photoName}
+                    fill
+                    className='object-cover'
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  )
 }
