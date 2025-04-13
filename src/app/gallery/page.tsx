@@ -1,7 +1,7 @@
 import { db } from '@/lib/prisma'
 import Image from 'next/image'
 
-export default async function PhotosPage() {
+export default async function GalleryPage() {
   const photos = await db.photo.findMany({
     orderBy: { id: 'asc' }
   })
@@ -21,7 +21,7 @@ export default async function PhotosPage() {
               alt={photo.photoName}
               fill
               className='object-cover'
-              loading="lazy"
+              loading='lazy'
             />
 
             <div className='absolute bottom-0 left-0 right-0 bg-black/60 text-white text-sm p-2'>
