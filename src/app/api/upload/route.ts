@@ -2,7 +2,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { NextRequest, NextResponse } from 'next/server'
 import * as exifr from 'exifr'
 import { db } from '@/lib/prisma'
-import { Photo, Prisma } from '@prisma/client'
+import { Photo, PhotoStatus, Prisma } from '@prisma/client'
 import sharp from 'sharp'
 
 const s3Client = new S3Client({
@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
           photoCity,
           photoTimestamp: takenAt,
           photoLocation: latitude && longitude ? { latitude, longitude } : Prisma.JsonNull,
-          status: 'pending'
+          status: PhotoStatus.Uploading
         }
       })
 
@@ -151,7 +151,7 @@ export async function POST(req: NextRequest) {
         data: {
           url,
           thumbnailUrl,
-          status: 'uploaded'
+          status: PhotoStatus.Uploaded
         }
       })
 

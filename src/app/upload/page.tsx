@@ -5,12 +5,13 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
+import { PhotoStatus } from '@prisma/client'
 
 type UploadStatus = {
   file: File
   preview: string
   progress: number
-  status: 'waiting' | 'uploading' | 'success' | 'error'
+  status: PhotoStatus
   url?: string
 }
 
@@ -55,7 +56,7 @@ export default function UploadPage() {
               file,
               preview: reader.result as string,
               progress: 0,
-              status: 'uploading'
+              status: PhotoStatus.Uploading
             })
           }
           reader.readAsDataURL(file)
@@ -83,24 +84,24 @@ export default function UploadPage() {
           xhr.upload.onprogress = (e) => {
             const percent = Math.round((e.loaded / e.total) * 100)
             updatedStatuses[index].progress = percent
-            updatedStatuses[index].status = 'uploading'
+            updatedStatuses[index].status = PhotoStatus.Uploading
             setUploadStatuses([...updatedStatuses])
           }
 
           xhr.onload = () => {
             if (xhr.status === 200) {
               const res = JSON.parse(xhr.responseText)
-              updatedStatuses[index].status = 'success'
+              updatedStatuses[index].status = PhotoStatus.Uploaded
               updatedStatuses[index].url = res.dbRecords?.[0]?.s3Url || null
             } else {
-              updatedStatuses[index].status = 'error'
+              updatedStatuses[index].status = PhotoStatus.Error
             }
             setUploadStatuses([...updatedStatuses])
             resolve()
           }
 
           xhr.onerror = () => {
-            updatedStatuses[index].status = 'error'
+            updatedStatuses[index].status = PhotoStatus.Error
             setUploadStatuses([...updatedStatuses])
             resolve()
           }
@@ -111,7 +112,7 @@ export default function UploadPage() {
     )
 
     // Once all uploads are finished, check if all were successful
-    const allSuccess = updatedStatuses.every((item) => item.status === 'success')
+    const allSuccess = updatedStatuses.every((item) => item.status === PhotoStatus.Uploaded)
 
     if (allSuccess) {
       toast.success('Upload Complete', {
@@ -146,7 +147,7 @@ export default function UploadPage() {
               onChange={handleFileChange}
             />
             {/* Button that triggers the hidden file input */}
-            <Button variant="outline" onClick={handleClick} >Select Files</Button>
+            <Button variant='outline' onClick={handleClick}>Select Files</Button>
 
             <Button type='submit'>Upload</Button>
           </div>

@@ -14,9 +14,10 @@ datasource db {
 }
 
 enum PhotoStatus {
-  pending
-  uploaded
-  error
+  Waiting
+  Uploading
+  Uploaded
+  Error
 }
 
 model Photo {
@@ -28,7 +29,7 @@ model Photo {
   photoCity         String?
   photoTimestamp    DateTime?
   uploadedTimestamp DateTime    @default(now())
-  status            PhotoStatus @default(pending)
+  status            PhotoStatus @default(Waiting)
 
   photoLocation Json? @map("photoLocation")
 }
