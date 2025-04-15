@@ -311,7 +311,6 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
                   alt={`a photo in ${photoDetail.photoCountry ?? 'Mysterious Place...'}`}
                   fill
                   className='object-contain'
-                  priority
                 />
               </div>
             </>

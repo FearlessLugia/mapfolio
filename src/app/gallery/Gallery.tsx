@@ -64,7 +64,6 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
                   alt={`a photo in ${selectedPhoto.photoCountry ?? 'Mysterious Place...'}`}
                   fill
                   className='object-contain'
-                  priority
                 />
               </div>
             </>
