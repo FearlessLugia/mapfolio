@@ -1,29 +1,82 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { signUpWithEmail } from '@/lib/auth-actions'
+import { Button } from '@/components/ui/button'
+import { Toaster } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 
 export default function SignUpPage() {
-  const [message, setMessage] = useState('')
+  const router = useRouter()
 
   async function handleSignUp(formData: FormData) {
     const result = await signUpWithEmail(formData)
-    setMessage(result.message)
+
+    if (result.success) {
+      toast.success('Sign Up Successful', {
+        description: 'You will be redirected shortly.'
+      })
+      router.push('/upload')
+    } else {
+      toast.error('Sign Up Failed', {
+        description: result.message
+      })
+    }
   }
 
   return (
-    <>
-      <h1>Sign Up</h1>
-      <form action={handleSignUp}>
-        <label>Email:</label>
-        <input type='email' name='email' required/>
-        <label>Password:</label>
-        <input type='password' name='password' required/>
-        <label>Name:</label>
-        <input type='text' name='name' required/>
-        <button type='submit'>Sign Up</button>
+    <main className='px-6 max-w-md mx-auto mt-10'>
+      <h1 className='text-2xl font-bold mb-6'>Sign Up</h1>
+
+      <form action={handleSignUp} className='space-y-6'>
+        {/* Email */}
+        <div>
+          <label className='block mb-2 font-medium' htmlFor='email'>
+            Email
+          </label>
+          <input
+            className='w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-400'
+            id='email'
+            type='email'
+            name='email'
+            required
+          />
+        </div>
+
+        {/* Password */}
+        <div>
+          <label className='block mb-2 font-medium' htmlFor='password'>
+            Password
+          </label>
+          <input
+            className='w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-400'
+            id='password'
+            type='password'
+            name='password'
+            required
+          />
+        </div>
+
+        {/* Name */}
+        <div>
+          <label className='block mb-2 font-medium' htmlFor='name'>
+            Name
+          </label>
+          <input
+            className='w-full border border-gray-300 rounded px-3 py-2 outline-none focus:border-blue-400'
+            id='name'
+            type='text'
+            name='name'
+            required
+          />
+        </div>
+
+        <Button type='submit' className='w-full'>
+          Sign Up
+        </Button>
       </form>
-      {message && <p>{message}</p>}
-    </>
+
+      <Toaster richColors/>
+    </main>
   )
 }
