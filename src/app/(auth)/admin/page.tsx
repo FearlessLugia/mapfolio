@@ -5,8 +5,9 @@ import { signInWithEmail } from '@/lib/auth-actions'
 import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
+import { authClient } from '@/lib/auth-client'
 
-export default function SignInPage() {
+export default function AdminPage() {
   const router = useRouter()
 
   async function handleSignIn(formData: FormData) {
@@ -14,12 +15,28 @@ export default function SignInPage() {
 
     if (result.success) {
       toast.success('Sign In Successful', {
-        description: 'Redirecting to upload page.'
+        description: 'Redirecting to upload page'
       })
       router.push('/upload')
     } else {
       toast.error('Sign In Failed', {
         description: result.message
+      })
+    }
+  }
+
+  async function handleSignOut() {
+    const { data, error } = await authClient.signOut()
+    console.log('error', error)
+
+    if (data) {
+      toast.success('Sign Out Successful', {
+        description: 'Redirecting to home page'
+      })
+      router.push('/')
+    } else {
+      toast.error('Sign Out Failed', {
+        description: error.message
       })
     }
   }
@@ -57,10 +74,16 @@ export default function SignInPage() {
           />
         </div>
 
-        <Button type='submit' className='w-full'>
+        <Button type='submit' className='w-full mt-3'>
           Sign In
         </Button>
       </form>
+
+      <div className='mt-6'>
+        <Button variant='outline' className='w-full mb-10' onClick={handleSignOut}>
+          Sign Out
+        </Button>
+      </div>
 
       <Toaster richColors/>
     </main>

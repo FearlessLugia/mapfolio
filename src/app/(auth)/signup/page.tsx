@@ -14,7 +14,7 @@ export default function SignUpPage() {
 
     if (result.success) {
       toast.success('Sign Up Successful', {
-        description: 'You will be redirected shortly.'
+        description: 'Redirecting to upload page'
       })
       router.push('/upload')
     } else {
@@ -71,7 +71,7 @@ export default function SignUpPage() {
           />
         </div>
 
-        <Button type='submit' className='w-full'>
+        <Button type='submit' className='w-full mt-3 mb-10'>
           Sign Up
         </Button>
       </form>
