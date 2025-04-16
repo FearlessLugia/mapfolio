@@ -167,9 +167,9 @@ export default function UploadPage() {
                 <div className='absolute bottom-0 left-0 right-0 h-2 bg-white/50'>
                   <div
                     className={`h-full transition-all ${
-                      item.status === 'success'
+                      item.status === PhotoStatus.Uploaded
                         ? 'bg-green-500'
-                        : item.status === 'error'
+                        : item.status === PhotoStatus.Error
                           ? 'bg-red-500'
                           : 'bg-blue-500'
                     }`}
@@ -178,10 +178,10 @@ export default function UploadPage() {
                 </div>
 
                 <p className='text-sm mt-1'>
-                  {item.status === 'waiting' && 'Waiting for upload'}
-                  {item.status === 'uploading' && `Uploading... ${item.progress}%`}
-                  {item.status === 'success' && '✅ Uploaded successfully'}
-                  {item.status === 'error' && '❌ Upload failed'}
+                  {item.status === PhotoStatus.Waiting && 'Waiting for upload'}
+                  {item.status === PhotoStatus.Uploading && `Uploading... ${item.progress}%`}
+                  {item.status === PhotoStatus.Uploaded && '✅ Uploaded successfully'}
+                  {item.status === PhotoStatus.Error && '❌ Upload failed'}
                 </p>
               </div>
             ))}
