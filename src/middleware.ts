@@ -5,6 +5,10 @@ export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request)
   console.log('sessionCookie', sessionCookie)
 
+  if (process.env.NODE_ENV === 'production'){
+    return NextResponse.redirect(new URL('/not-found', request.url))
+  }
+
   if (!sessionCookie) {
     return NextResponse.redirect(new URL('/admin', request.url))
   }

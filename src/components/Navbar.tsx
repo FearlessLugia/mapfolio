@@ -1,7 +1,13 @@
 import { NavigationMenu, NavigationMenuLink, NavigationMenuList } from '@/components/ui/navigation-menu'
 import Link from 'next/link'
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
 
-export const Navbar = () => {
+export const Navbar = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  })
+
   return (
     <NavigationMenu className='mx-auto w-full max-w-4xl bg-white'>
       <NavigationMenuList className='flex justify-center items-center p-4 gap-8'>
@@ -23,12 +29,12 @@ export const Navbar = () => {
             Map
           </NavigationMenuLink>
         </Link>
-        <Link href='/upload' legacyBehavior passHref>
+        {session && <Link href='/upload' legacyBehavior passHref>
           <NavigationMenuLink
             className='text-lg px-6 py-2 rounded hover:bg-gray-100 transition'>
             Upload
           </NavigationMenuLink>
-        </Link>
+        </Link>}
       </NavigationMenuList>
     </NavigationMenu>
   )
