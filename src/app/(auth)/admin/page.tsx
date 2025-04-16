@@ -35,10 +35,17 @@ export default function AdminPage() {
     const result = await signInWithEmail(formData)
 
     if (result.success) {
+
+
       toast.success('Sign In Successful', {
         description: 'Redirecting to upload page'
       })
-      router.push('/upload')
+
+      setTimeout(() => {
+        router.push(result.callbackURL)
+        // Force refresh the navbar
+        router.refresh()
+      }, 1000)
     } else {
       toast.error('Sign In Failed', {
         description: result.message
@@ -48,13 +55,17 @@ export default function AdminPage() {
 
   async function handleSignOut() {
     const { data, error } = await authClient.signOut()
-    console.log('result', data, error)
 
     if (data) {
       toast.success('Sign Out Successful', {
         description: 'Redirecting to home page'
       })
-      router.push('/')
+
+      setTimeout(() => {
+        router.push('/')
+        // Force refresh the navbar
+        router.refresh()
+      }, 1000)
     } else {
       toast.error('Sign Out Failed', {
         description: error.message

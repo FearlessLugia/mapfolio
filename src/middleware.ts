@@ -3,13 +3,17 @@ import { getSessionCookie } from 'better-auth/cookies'
 
 export async function middleware(request: NextRequest) {
   const sessionCookie = getSessionCookie(request)
-  console.log('sessionCookie', sessionCookie)
 
-  if (process.env.NODE_ENV === 'production'){
+  const { pathname } = request.nextUrl
+
+  // When deployed, the sign-up page should redirect to a 404 page
+  // Never expose the sign-up page in production
+  if (process.env.NODE_ENV === 'production' && pathname === '/signup') {
     return NextResponse.redirect(new URL('/not-found', request.url))
   }
 
-  if (!sessionCookie) {
+  // Redirect to the sign-in page if the user is not authenticated
+  if (!sessionCookie && pathname === '/upload') {
     return NextResponse.redirect(new URL('/admin', request.url))
   }
 

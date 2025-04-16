@@ -35,6 +35,12 @@ export const Navbar = async () => {
             Upload
           </NavigationMenuLink>
         </Link>}
+        {session && <Link href='/admin' legacyBehavior passHref>
+          <NavigationMenuLink
+            className='text-lg px-6 py-2 rounded hover:bg-gray-100 transition'>
+            Admin
+          </NavigationMenuLink>
+        </Link>}
       </NavigationMenuList>
     </NavigationMenu>
   )

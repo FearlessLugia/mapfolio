@@ -6,6 +6,7 @@ export async function signUpWithEmail(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
   const name = formData.get('name') as string
+  const callbackURL = '/upload'
 
   const res = await auth.api.signUpEmail({
     body: {
@@ -19,13 +20,15 @@ export async function signUpWithEmail(formData: FormData) {
   if (!res) {
     return {
       success: false,
-      message: `Error: ${res || 'An unexpected error occurred'}`
+      message: `Error: ${res || 'An unexpected error occurred'}`,
+      callbackURL: ''
     }
   }
 
   return {
     success: true,
-    message: 'Sign-up successful!'
+    message: 'Sign-up successful!',
+    callbackURL
   }
 }
 
@@ -37,8 +40,7 @@ export async function signInWithEmail(formData: FormData) {
   const res = await auth.api.signInEmail({
     body: {
       email,
-      password,
-      callbackURL
+      password
     }
   })
   console.log('Sign-in response:', res)
@@ -46,12 +48,14 @@ export async function signInWithEmail(formData: FormData) {
   if (!res) {
     return {
       success: false,
-      message: `Error: ${res || 'An unexpected error occurred'}`
+      message: `Error: ${res || 'An unexpected error occurred'}`,
+      callbackURL: ''
     }
   }
 
   return {
     success: true,
-    message: 'Sign-in successful!'
+    message: 'Sign-in successful!',
+    callbackURL
   }
 }
