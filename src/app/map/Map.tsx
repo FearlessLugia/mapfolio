@@ -7,6 +7,7 @@ import { Photo } from '@prisma/client'
 import type { FeatureCollection, Point } from 'geojson'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import Image from 'next/image'
+import { Skeleton } from '@/components/ui/skeleton'
 
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN!
 
@@ -48,6 +49,7 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
   // Photo detail dialog (the big/lightbox version)
   const [photoDetailOpen, setPhotoDetailOpen] = useState(false)
   const [photoDetail, setPhotoDetail] = useState<MapPhotoProps | null>(null)
+  const [imageLoaded, setImageLoaded] = useState(false)
 
   // If user closes the main dialog, also close the photo detail
   const handleMainDialogOpenChange = (open: boolean) => {
@@ -253,12 +255,14 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
               className='relative w-full aspect-video overflow-hidden rounded cursor-pointer'
               onClick={() => showPhotoDetail(selectedPhotos[0])}
             >
+              {!imageLoaded && <Skeleton className='absolute inset-0' />}
               <Image
                 src={selectedPhotos[0].url}
                 alt={`a photo in ${selectedPhotos[0].photoCountry ?? 'Mysterious Place...'}`}
                 fill
                 className='object-contain'
                 priority
+                onLoadingComplete={() => setImageLoaded(true)}
               />
             </div>
           ) : (
@@ -306,11 +310,13 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
                 </DialogTitle>
               </DialogHeader>
               <div className='relative w-full aspect-video overflow-hidden rounded'>
+                {!imageLoaded && <Skeleton className='absolute inset-0' />}
                 <Image
                   src={photoDetail.url}
                   alt={`a photo in ${photoDetail.photoCountry ?? 'Mysterious Place...'}`}
                   fill
                   className='object-contain'
+                  onLoadingComplete={() => setImageLoaded(true)}
                 />
               </div>
             </>

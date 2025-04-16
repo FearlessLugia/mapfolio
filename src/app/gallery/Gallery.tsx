@@ -4,13 +4,16 @@ import { useState } from 'react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Photo } from '@prisma/client'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function Gallery({ photos }: { photos: Photo[] }) {
   const [detailOpen, setDetailOpen] = useState(false)
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null)
+  const [imageLoaded, setImageLoaded] = useState(false)
 
   const openPhotoDetail = (photo: Photo) => {
     setSelectedPhoto(photo)
+    setImageLoaded(false)
     setDetailOpen(true)
   }
 
@@ -59,11 +62,15 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
                 </DialogTitle>
               </DialogHeader>
               <div className='relative w-full aspect-video overflow-hidden rounded'>
+                {!imageLoaded && (
+                  <Skeleton className='absolute inset-0'/>
+                )}
                 <Image
                   src={selectedPhoto.url}
                   alt={`a photo in ${selectedPhoto.photoCountry ?? 'Mysterious Place...'}`}
                   fill
                   className='object-contain'
+                  onLoadingComplete={() => setImageLoaded(true)}
                 />
               </div>
             </>
