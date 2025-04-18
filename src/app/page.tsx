@@ -1,7 +1,15 @@
+import { Landing } from '@/components/Landing'
+import { Projects } from '@/components/Projects'
+
 export default function Home() {
   return (
-    <main className='px-6'>
-      <h1 className='text-2xl font-bold mb-6'>Home Page</h1>
-    </main>
+    // <main className='px-6'>
+    //   <h1 className='text-2xl font-bold mb-6'>Home Page</h1>
+    // </main>
+
+    <div>
+      <Landing/>
+      <Projects/>
+    </div>
   )
 }
