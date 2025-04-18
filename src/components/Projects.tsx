@@ -3,29 +3,41 @@
 import React, { useEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
 
 gsap.registerPlugin(ScrollTrigger)
 
 interface CardItem {
   title: string
   description: string
+  tags: string[]
+  link?: string
 }
 
 const items: CardItem[] = [
   {
-    title: 'Card Title',
-    description:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab dicta error nam eaque. Eum fuga laborum quos expedita iste saepe similique, unde possimus quia at magnam sed cupiditate? Reprehenderit, harum!'
+    title: 'Sample Project',
+    description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
+    tags: ['Demo']
   },
   {
-    title: 'Card Title',
-    description:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab dicta error nam eaque. Eum fuga laborum quos expedita iste saepe similique, unde possimus quia at magnam sed cupiditate? Reprehenderit, harum!'
+    title: 'Arc‑sync',
+    description: 'Light‑weight, lock‑free concurrency primitives for async Rust.',
+    tags: ['Rust', 'Concurrency']
   },
   {
-    title: 'Card Title',
-    description:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Ab dicta error nam eaque. Eum fuga laborum quos expedita iste saepe similique, unde possimus quia at magnam sed cupiditate? Reprehenderit, harum!'
+    title: 'Lesty‑kv',
+    description: 'An LSM‑Tree–based key‑value store engine implemented in C++',
+    tags: ['C++', 'Database', 'Key‑Value Store'],
+    link: 'https://github.com/FearlessLugia/lesty-kv'
+  },
+  {
+    title: 'Rusty‑dfs',
+    description: 'A distributed file storage system implemented in Rust',
+    tags: ['Rust', 'Distributed System', 'File Storage'],
+    link: 'https://github.com/FearlessLugia/rusty-dfs'
   }
 ]
 
@@ -33,6 +45,7 @@ export const Projects = () => {
   const containerRef = useRef<HTMLDivElement>(null)
   const cardsRef = useRef<HTMLDivElement[]>([])
 
+  // GSAP scroll trigger logic
   useEffect(() => {
     const cards = cardsRef.current
     const container = containerRef.current
@@ -43,13 +56,12 @@ export const Projects = () => {
     container.style.setProperty('--card-height', `${cardHeight}px`)
 
     cards.forEach((card, index) => {
-      const offsetTop = 20 + index * 100
-      console.log('offsetTop', offsetTop)
+      const offsetTop = 50 + index * 100 // spacing between cards
       card.style.paddingTop = `${offsetTop}px`
 
       if (index === cards.length - 1) return
 
-      const toScale = 1 - (cards.length - 1 - index) * 0.1
+      // scale targets for the outgoing cards
       const nextCard = cards[index + 1]
       const inner = card.querySelector<HTMLDivElement>('.card-inner')
       if (!inner) return
@@ -59,43 +71,66 @@ export const Projects = () => {
         start: `top+=${offsetTop} bottom`,
         end: `bottom top+=${card.clientHeight}`,
         scrub: true
-        // onUpdate: (self) => {
-        //   const p = self.progress
-        //   gsap.to(inner, { scale: 1 + (toScale - 1) * p, overwrite: true })
-        // }
       })
     })
   }, [])
 
   return (
     <>
-      <div className='h-[40vh]'></div>
+      <div className='h-[40vh]'/>
       <div
         ref={containerRef}
         className='cards w-full max-w-[900px] mx-auto grid gap-y-[40px]'
       >
         {items.map((item, i) => (
           <div
-            key={i}
+            key={item.title}
             ref={(el) => {
               if (el) cardsRef.current[i] = el
             }}
             className='card sticky top-0'
           >
-            <div className='card-inner will-change-transform bg-white rounded-lg overflow-hidden shadow-lg origin-top'>
-              <div className='px-8 py-10 flex flex-col'>
-                <h1 className='text-5xl font-semibold text-[#16263a] leading-tight'>
+            <Card className='card-inner will-change-transform origin-top'>
+              <CardHeader>
+                <CardTitle className='text-4xl md:text-5xl text-[#16263a]'>
                   {item.title}
-                </h1>
-                <p className='mt-4 text-xl leading-relaxed text-[#16263a]'>
+                </CardTitle>
+                <CardDescription className='mt-4 text-lg md:text-xl text-[#16263a]'>
                   {item.description}
-                </p>
-              </div>
-            </div>
+                </CardDescription>
+              </CardHeader>
+
+              {item.tags?.length > 0 && (
+                <CardContent className='flex flex-wrap gap-2 pt-2'>
+                  {item.tags.map((tag) => (
+                    <Badge key={tag} variant='secondary'>
+                      {tag}
+                    </Badge>
+                  ))}
+                </CardContent>
+              )}
+
+              {item.link ? (
+                <CardContent className='pt-4'>
+                  <Link
+                    href={item.link}
+                    target='_blank'
+                    className='underline text-sky-600 hover:text-sky-800'
+                  >
+                    View GitHub Repository ↗
+                  </Link>
+                </CardContent>
+              ) : (
+                <CardContent className='pt-4'>
+                  This project is proprietary to the company — no public link available 😥
+                </CardContent>
+              )}
+            </Card>
           </div>
         ))}
       </div>
-      <div className='h-[90vh]'></div>
+      <div className='h-[90vh]'/>
+
       <style jsx>{`
         .cards {
           --cards-count: 0;
@@ -106,3 +141,5 @@ export const Projects = () => {
     </>
   )
 }
+
+export default Projects
