@@ -24,23 +24,23 @@ interface CardItem {
 
 const items: CardItem[] = [
   {
-    title: 'Sample Project',
-    description: 'Lorem ipsum dolor sit amet consectetur adipisicing elit.',
-    tags: ['Demo']
+    title: '3D Network Visualization',
+    description: 'A Microservices full-stack application using Node.js and TypeScript, rendering complex 3D network visualizations of coordinates and relational edges from non-hierarchical graph data through React and Three.js',
+    tags: ['MERN Stack', 'TypeScript', 'Three.js', 'GraphQL', 'RabbitMQ']
   },
   {
-    title: 'Arc‑sync',
-    description: 'Light‑weight, lock‑free concurrency primitives for async Rust.',
-    tags: ['Rust', 'Concurrency']
+    title: 'Model Diff',
+    description: 'A .NET application to efficiently compare different types of 3D models',
+    tags: ['C#', '.NET', 'WPF', 'C++', 'CAA', 'Graph Operations', 'XML']
   },
   {
-    title: 'Lesty‑kv',
-    description: 'An LSM‑Tree–based key‑value store engine implemented in C++',
+    title: 'Lesty KV',
+    description: 'An LSM‑Tree-based key‑value store engine implemented in C++',
     tags: ['C++', 'Database', 'Key‑Value Store'],
     link: 'https://github.com/FearlessLugia/lesty-kv'
   },
   {
-    title: 'Rusty‑dfs',
+    title: 'Rusty DFS',
     description: 'A distributed file storage system implemented in Rust',
     tags: ['Rust', 'Distributed System', 'File Storage'],
     link: 'https://github.com/FearlessLugia/rusty-dfs'
@@ -77,8 +77,6 @@ export const Projects = () => {
 
   return (
     <>
-      <div className='h-[40vh]'/>
-
       <div
         ref={containerRef}
         className='cards w-full max-w-[900px] mx-auto grid gap-y-[40px]'
@@ -139,7 +137,7 @@ export const Projects = () => {
         })}
       </div>
 
-      <div className='h-[90vh]'/>
+      <div className='h-[60vh]'/>
 
       <style jsx>{`
         .cards {

@@ -1,15 +1,13 @@
 import { Landing } from '@/components/Landing'
 import { Projects } from '@/components/Projects'
+import { Contact } from '@/components/Contact'
 
 export default function Home() {
   return (
-    // <main className='px-6'>
-    //   <h1 className='text-2xl font-bold mb-6'>Home Page</h1>
-    // </main>
-
-    <div>
+    <main>
       <Landing/>
       <Projects/>
-    </div>
+      <Contact/>
+    </main>
   )
 }
