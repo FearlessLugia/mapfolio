@@ -1,6 +1,6 @@
-import { Landing } from '@/components/Landing'
-import { Projects } from '@/components/Projects'
-import { Contact } from '@/components/Contact'
+import { Landing } from '@/components/sections/Landing'
+import { Projects } from '@/components/sections/Projects'
+import { Contact } from '@/components/sections/Contact'
 import React from 'react'
 
 export default function Home() {

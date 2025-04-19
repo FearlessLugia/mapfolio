@@ -3,7 +3,7 @@
 import React, { useLayoutEffect, useRef } from 'react'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger'
-import { ProjectCard } from '@/components/ProjectCard'
+import { ProjectCard } from '@/components/cards/ProjectCard'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -51,7 +51,6 @@ export const Projects = () => {
     const cardHeight = cards[0].clientHeight
     container.style.setProperty('--cards-count', `${cards.length}`)
     container.style.setProperty('--card-height', `${cardHeight}px`)
-    // 计算完毕后再显示
     container.style.visibility = 'visible'
 
     cards.forEach((card, index) => {
@@ -91,7 +90,7 @@ export const Projects = () => {
         })}
       </div>
 
-      <div className='h-[20vh]'/>
+      <div className='h-[35vh]'/>
 
       <style jsx>{`
         .cards {

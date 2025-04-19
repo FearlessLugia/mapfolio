@@ -4,8 +4,8 @@ import React, { useLayoutEffect, useRef } from 'react'
 import Image from 'next/image'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger'
-import { ContactCard } from '@/components/ContactCard'
-import { SiteInfoCard } from '@/components/SiteInfoCard'
+import { ContactCard } from '@/components/cards/ContactCard'
+import { SiteInfoCard } from '@/components/cards/SiteInfoCard'
 
 gsap.registerPlugin(ScrollTrigger)
 
