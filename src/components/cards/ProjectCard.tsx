@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import React from 'react'
-import { ProjectCardItem } from '@/components/sections/Projects'
+import { ProjectCardItem } from '@/data/projects'
 
 export const ProjectCard = ({ item }: { item: ProjectCardItem }) => {
   return (
