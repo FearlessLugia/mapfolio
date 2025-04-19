@@ -2,15 +2,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import React from 'react'
+import { ProjectCardItem } from '@/components/sections/Projects'
 
-interface ProjectCardProps {
-  title: string
-  description: string
-  tags: string[]
-  link?: string
-}
-
-export const ProjectCard = ({ item }: { item: ProjectCardProps }) => {
+export const ProjectCard = ({ item }: { item: ProjectCardItem }) => {
   return (
     <Card className='card-inner will-change-transform origin-top'>
       <CardHeader>
@@ -22,7 +16,7 @@ export const ProjectCard = ({ item }: { item: ProjectCardProps }) => {
         </CardDescription>
       </CardHeader>
 
-      <CardContent className='pt-4 min-h-[28px]'>
+      <CardContent className='min-h-[28px]'>
         <div className='flex flex-col gap-4 pt-2'>
           {item.tags?.length > 0 && (
             <div className='flex flex-wrap gap-2'>
@@ -33,6 +27,14 @@ export const ProjectCard = ({ item }: { item: ProjectCardProps }) => {
               ))}
             </div>
           )}
+
+          <div className='text-lg text-[#16263a]'>
+            <ul className='list-disc pl-5'>
+              {item.detail?.map((detail) => (
+                <li key={detail}>{detail}</li>
+              ))}
+            </ul>
+          </div>
 
           <div>
             {item.link ? (
