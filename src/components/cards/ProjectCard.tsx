@@ -8,10 +8,10 @@ export const ProjectCard = ({ item }: { item: ProjectCardItem }) => {
   return (
     <Card className='card-inner will-change-transform origin-top shadow-lg rounded-3xl'>
       <CardHeader>
-        <CardTitle className='text-3xl md:text-4xl text-[#16263a]'>
+        <CardTitle className='text-3xl md:text-4xl font-bold text-[#16263a]'>
           {item.title}
         </CardTitle>
-        <CardDescription className='mt-4 text-lg md:text-xl text-[#16263a]'>
+        <CardDescription className='mt-4 text-lg md:text-xl text-muted-foreground mb-6'>
           {item.description}
         </CardDescription>
       </CardHeader>

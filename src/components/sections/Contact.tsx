@@ -48,7 +48,7 @@ export const Contact = () => {
         className='panel absolute inset-0 z-50 flex items-center justify-center will-change-transform'
       >
         <div className='z-50'>
-          <ContactCard/>
+          <SiteInfoCard/>
         </div>
 
         <Image
@@ -65,7 +65,7 @@ export const Contact = () => {
         className='panel absolute inset-0 will-change-transform flex items-center justify-center h-screen'
       >
         <div className='z-10'>
-          <SiteInfoCard/>
+          <ContactCard/>
         </div>
 
         <Image
