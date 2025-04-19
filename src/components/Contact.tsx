@@ -4,8 +4,8 @@ import React, { useLayoutEffect, useRef } from 'react'
 import Image from 'next/image'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/dist/ScrollTrigger'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ContactCard } from '@/components/ContactCard'
+import { SiteInfoCard } from '@/components/SiteInfoCard'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -45,9 +45,19 @@ export const Contact = () => {
     >
       <div
         ref={(el) => setPanelRef(el, 0)}
-        className='panel absolute inset-0 z-50 will-change-transform'
+        className='panel absolute inset-0 z-50 flex items-center justify-center will-change-transform'
       >
-        <div className='absolute inset-0 bg-white'/>
+        <div className='z-50'>
+          <ContactCard/>
+        </div>
+
+        <Image
+          src='/background.jpg'
+          alt='a background picture'
+          fill
+          priority
+          className='object-cover z-20'
+        />
       </div>
 
       <div
@@ -55,11 +65,11 @@ export const Contact = () => {
         className='panel absolute inset-0 will-change-transform flex items-center justify-center h-screen'
       >
         <div className='z-10'>
-          <ContactCard/>
+          <SiteInfoCard/>
         </div>
 
         <Image
-          src='/background.jpg'
+          src='/background2.jpg'
           alt='a background picture'
           fill
           priority
