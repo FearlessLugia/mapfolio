@@ -6,9 +6,9 @@ import { ProjectCardItem } from '@/components/sections/Projects'
 
 export const ProjectCard = ({ item }: { item: ProjectCardItem }) => {
   return (
-    <Card className='card-inner will-change-transform origin-top'>
+    <Card className='card-inner will-change-transform origin-top shadow-lg rounded-3xl'>
       <CardHeader>
-        <CardTitle className='text-4xl md:text-5xl text-[#16263a]'>
+        <CardTitle className='text-3xl md:text-4xl text-[#16263a]'>
           {item.title}
         </CardTitle>
         <CardDescription className='mt-4 text-lg md:text-xl text-[#16263a]'>
@@ -17,9 +17,9 @@ export const ProjectCard = ({ item }: { item: ProjectCardItem }) => {
       </CardHeader>
 
       <CardContent className='min-h-[28px]'>
-        <div className='flex flex-col gap-4 pt-2'>
+        <div className='flex flex-col gap-4'>
           {item.tags?.length > 0 && (
-            <div className='flex flex-wrap gap-2'>
+            <div className='flex flex-wrap gap-3'>
               {item.tags.map((tag) => (
                 <Badge key={tag} variant='secondary'>
                   {tag}
@@ -46,7 +46,7 @@ export const ProjectCard = ({ item }: { item: ProjectCardItem }) => {
                 View GitHub Repository ↗
               </Link>
             ) : (
-              <span>This project is proprietary to the company — no public link available 😥</span>
+              <span className='text-md'>This project is proprietary to the company — no public link available 😥</span>
             )}
           </div>
         </div>

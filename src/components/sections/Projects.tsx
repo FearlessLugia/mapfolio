@@ -76,7 +76,7 @@ export const Projects = () => {
 
     cards.forEach((card, index) => {
       if (index === cards.length - 1) return
-      const offsetTop = 50 + index * 100
+      const offsetTop = 50 + index * 80
       const nextCard = cards[index + 1]
       ScrollTrigger.create({
         trigger: nextCard,
@@ -95,7 +95,7 @@ export const Projects = () => {
         style={{ visibility: 'hidden' }}
       >
         {items.map((item, i) => {
-          const offsetTop = 50 + i * 100
+          const offsetTop = 50 + i * 80
           return (
             <div
               key={item.title}
