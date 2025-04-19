@@ -7,18 +7,9 @@ import { ScrollTrigger } from 'gsap/dist/ScrollTrigger'
 
 gsap.registerPlugin(ScrollTrigger)
 
-interface Img {
-  src: string
-  alt: string
-}
-
-interface LayeredImagesProps {
-  images: Img[]
-}
-
-export const Contact: React.FC<LayeredImagesProps> = ({ images }) => {
+export const Contact = () => {
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const panelRefs = useRef<HTMLDivElement[]>([]) // 保存 panel DOM
+  const panelRefs = useRef<HTMLDivElement[]>([])
 
   const setPanelRef = (el: HTMLDivElement | null, i: number) => {
     if (el) panelRefs.current[i] = el
@@ -26,11 +17,6 @@ export const Contact: React.FC<LayeredImagesProps> = ({ images }) => {
 
   useLayoutEffect(() => {
     if (!containerRef.current) return
-
-    // zIndex initialization, the last image is on top
-    gsap.set(panelRefs.current, {
-      zIndex: (_i, _t, targets) => targets.length - _i
-    })
 
     // core animation: all panels except the last one slide up 100% of their height
     gsap.to(panelRefs.current.slice(0, -1), {
@@ -40,14 +26,14 @@ export const Contact: React.FC<LayeredImagesProps> = ({ images }) => {
       scrollTrigger: {
         trigger: containerRef.current,
         start: 'top top',
-        end: `+=${images.length * 100}%`, // adjust scroll distance in terms of image count
+        end: '+=100%',
         scrub: true,
         pin: true
       }
     })
 
     return () => ScrollTrigger.getAll().forEach(t => t.kill())
-  }, [images.length])
+  }, [])
 
   return (
     <div
@@ -55,23 +41,31 @@ export const Contact: React.FC<LayeredImagesProps> = ({ images }) => {
       ref={containerRef}
       className='relative w-full h-screen overflow-hidden'
     >
-      {images.map((img, i) => (
-        <div
-          // every panel is absolutely positioned and fills the screen
-          key={img.src}
-          ref={el => setPanelRef(el, i)}
-          className='panel absolute inset-0 will-change-transform'
-        >
-          <Image
-            src={img.src}
-            alt={img.alt}
-            fill
-            priority={i === 0}
-            className='object-cover'
-          />
-          {/*<div className='absolute inset-0 bg-gradient-to-r from-slate-900'/>*/}
+      <div
+        ref={(el) => setPanelRef(el, 0)}
+        className='panel absolute inset-0 z-50 will-change-transform'
+      >
+        <div className='absolute inset-0 bg-white'/>
+      </div>
+
+      <div
+        ref={(el) => setPanelRef(el, 1)}
+        className='panel absolute inset-0 will-change-transform'
+      >
+        <div className='absolute inset-0 flex items-center justify-center z-10'>
+          <h1 className='bg-text text-5xl font-bold text-white drop-shadow-lg'>
+            Site Information
+          </h1>
         </div>
-      ))}
+
+        <Image
+          src='/background.jpg'
+          alt='a background picture'
+          fill
+          priority
+          className='object-cover z-0'
+        />
+      </div>
     </div>
   )
 }
