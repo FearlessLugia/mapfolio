@@ -10,6 +10,7 @@ export interface ExpCardItem {
   tags: string[]
   detail?: string[]
   direction: ExpCardDirection
+  isLarge: boolean
 }
 
 export enum ExpCardDirection {
@@ -28,7 +29,8 @@ export const workExp: ExpCardItem[] = [
     endYear: 7,
     endMonth: 9,
     tags: [''],
-    direction: ExpCardDirection.Right
+    direction: ExpCardDirection.Right,
+    isLarge: false
   },
   {
     place: 'Ansys',
@@ -46,7 +48,8 @@ export const workExp: ExpCardItem[] = [
       'Conducted an in-depth analysis of specific modules and provided technical insights for potential enhancements and forward development.',
       'Authored Python scripts to invoke the refactored methods, ensuring change consistency and contributing to automated regression testing.'
     ],
-    direction: ExpCardDirection.Right
+    direction: ExpCardDirection.Right,
+    isLarge: false
   },
   {
     place: 'Safran',
@@ -63,7 +66,8 @@ export const workExp: ExpCardItem[] = [
       'Created visual, interactive outputs by building graphs from diverse sources to handle extensive structured and unstructured data generated from different stages of the design life cycle, ensuring improved deliverable quality, consistency with design changes, and data integrity.',
       'Awarded the 2023 Star of the company. Achieved "Exceeds Expectations" appraisals (4/4) for both 2021 and 2022. Secured 3 software copyrights.'
     ],
-    direction: ExpCardDirection.Right
+    direction: ExpCardDirection.Right,
+    isLarge: false
   },
   {
     place: 'Sony',
@@ -74,7 +78,8 @@ export const workExp: ExpCardItem[] = [
     endYear: 4,
     endMonth: 4,
     tags: ['C#', 'C++'],
-    direction: ExpCardDirection.Right
+    direction: ExpCardDirection.Right,
+    isLarge: false
   },
   {
     place: 'Western Securities Co., Ltd.',
@@ -85,7 +90,8 @@ export const workExp: ExpCardItem[] = [
     endYear: 3,
     endMonth: 4,
     tags: [''],
-    direction: ExpCardDirection.Right
+    direction: ExpCardDirection.Right,
+    isLarge: false
   }
 ]
 
@@ -101,7 +107,8 @@ export const eduExp: ExpCardItem[] = [
     endMonth: 6,
     tags: ['French'],
     detail: ['Explore Program funded by the Government of Canada'],
-    direction: ExpCardDirection.Left
+    direction: ExpCardDirection.Left,
+    isLarge: true
   },
   {
     place: 'University of Toronto',
@@ -112,8 +119,9 @@ export const eduExp: ExpCardItem[] = [
     startMonth: 9,
     endYear: 7,
     endMonth: 11,
-    tags: [''],
-    direction: ExpCardDirection.Left
+    tags: ['Distributed System', 'Database System'],
+    direction: ExpCardDirection.Left,
+    isLarge: false
   },
   {
     place: 'Zhejiang University',
@@ -125,7 +133,8 @@ export const eduExp: ExpCardItem[] = [
     endYear: 3,
     endMonth: 7,
     tags: [''],
-    direction: ExpCardDirection.Left
+    direction: ExpCardDirection.Left,
+    isLarge: false
   },
   {
     place: 'École Polytechnique',
@@ -137,7 +146,8 @@ export const eduExp: ExpCardItem[] = [
     endYear: 2,
     endMonth: 9,
     tags: [''],
-    direction: ExpCardDirection.Left
+    direction: ExpCardDirection.Left,
+    isLarge: true
   },
   {
     place: 'Georgia Institute of Technology',
@@ -149,7 +159,8 @@ export const eduExp: ExpCardItem[] = [
     endYear: 2,
     endMonth: 2,
     tags: [''],
-    direction: ExpCardDirection.Left
+    direction: ExpCardDirection.Left,
+    isLarge: true
   }
 ]
 
@@ -165,7 +176,8 @@ export const lifeExp: ExpCardItem[] = [
     endYear: 6,
     endMonth: 8,
     tags: [''],
-    direction: ExpCardDirection.Left
+    direction: ExpCardDirection.Left,
+    isLarge: false
   },
   {
     place: 'Received Immigrant Visa to Canada',
@@ -177,6 +189,7 @@ export const lifeExp: ExpCardItem[] = [
     endYear: 6,
     endMonth: 2,
     tags: [''],
-    direction: ExpCardDirection.Left
+    direction: ExpCardDirection.Left,
+    isLarge: false
   }
 ]

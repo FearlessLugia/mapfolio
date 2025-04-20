@@ -1,6 +1,5 @@
 'use client'
 
-import clsx from 'clsx'
 import { workExp, eduExp, lifeExp, ExpCardItem, ExpCardDirection } from '@/data/experiences'
 import { MONTH_HEIGHT, spanInMonths, toMonths } from '@/lib/date'
 import { ExperienceCardWithDialog } from '@/components/cards/ExperienceCardWithDialog'
@@ -40,10 +39,10 @@ export const Experience = () => {
         return (
           <div
             key={`${item.place}-${item.startYear}`}
-            className={clsx('absolute flex', isLeft ? 'justify-start pr-4' : 'justify-end pl-4')}
-            style={{ top: topPx, height: spanPx, [isLeft ? 'left' : 'right']: 0 }}
+            className='absolute flex'
+            style={{ top: topPx, height: spanPx, [isLeft ? 'left' : 'right']: 20 }}
           >
-            <div className='relative flex flex-col items-center w-[calc(50%+48rem)]'>
+            <div className='relative flex flex-col items-center'>
               <ExperienceCardWithDialog
                 experience={item}
                 spanPx={spanPx}
