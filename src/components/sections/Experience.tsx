@@ -19,11 +19,11 @@ export const Experience = () => {
   const axisHeight = (latest - earliest) * MONTH_HEIGHT
 
   return (
-    <section className='relative mx-auto max-w-5xl'
+    <section className='relative mx-auto max-w-5xl mt-20'
              style={{ height: axisHeight }}>
       {/* central axis */}
       <div
-        className='absolute left-1/2 -translate-x-1/2 bg-border w-px'
+        className='absolute left-1/2 -translate-x-1/2 bg-border w-px h-full'
       />
 
       {items.map((item) => {

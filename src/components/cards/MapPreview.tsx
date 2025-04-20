@@ -15,7 +15,6 @@ export default function MapPreview() {
 
     const map = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
       center: [2, 48],
       zoom: 0
     })
