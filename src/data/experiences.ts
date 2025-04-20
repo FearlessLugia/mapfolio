@@ -24,7 +24,7 @@ export const workExp: ExpCardItem[] = [
     location: 'Toronto, ON',
     date: 'June 2025 - September 2025',
     startYear: 2025,
-    startMonth: 6,
+    startMonth: 5,
     endYear: 2025,
     endMonth: 9,
     tags: [''],
@@ -35,11 +35,17 @@ export const workExp: ExpCardItem[] = [
     title: 'Software Engineer Intern',
     location: 'Toronto, ON',
     date: 'January 2025 - April 2025',
-    startYear: 2025,
-    startMonth: 1,
+    startYear: 2024,
+    startMonth: 12,
     endYear: 2025,
     endMonth: 4,
     tags: ['C++', 'gRPC', 'Python', 'Git', 'Azure DevOps'],
+    detail: [
+      'Refactored and modernized the existing C++ API under HFSS for inter-process communication and scripting access using gRPC, enabling a seamless shift from a Windows-specific interface towards a web-based microservices architecture, while preserving full backward compatibility.',
+      'Developed and debugged within a large-scale codebase of a flagship commercial industrial software, gaining hands-on experience with complex system architecture and legacy system integration.',
+      'Conducted an in-depth analysis of specific modules and provided technical insights for potential enhancements and forward development.',
+      'Authored Python scripts to invoke the refactored methods, ensuring change consistency and contributing to automated regression testing.'
+    ],
     direction: ExpCardDirection.Right
   },
   {
@@ -49,8 +55,14 @@ export const workExp: ExpCardItem[] = [
     startYear: 2021,
     startMonth: 4,
     endYear: 2024,
-    endMonth: 4,
+    endMonth: 5,
     tags: ['C#', 'TypeScript', 'React', 'Node.js', 'Python', 'C++', 'MongoDB', 'MySQL', 'Vue', 'Git'],
+    detail: [
+      'Led team of 2 for front-end development of various engineering and manufacturing data management systems using React, TypeScript and Vue.',
+      'Developed software tools in C# and C++, including CATIA extended development, to apply, check, and compare 3D models, significantly streamlining the design process and reducing lead times.',
+      'Created visual, interactive outputs by building graphs from diverse sources to handle extensive structured and unstructured data generated from different stages of the design life cycle, ensuring improved deliverable quality, consistency with design changes, and data integrity.',
+      'Awarded the 2023 Star of the company. Achieved "Exceeds Expectations" appraisals (4/4) for both 2021 and 2022. Secured 3 software copyrights.'
+    ],
     direction: ExpCardDirection.Right
   },
   {
@@ -69,7 +81,7 @@ export const workExp: ExpCardItem[] = [
     title: 'Equity Research Intern',
     date: 'April 2019 - July 2019',
     startYear: 2019,
-    startMonth: 4,
+    startMonth: 3,
     endYear: 2019,
     endMonth: 7,
     tags: [''],
@@ -84,12 +96,12 @@ export const eduExp: ExpCardItem[] = [
     location: 'Church Point, NS',
     date: 'May 2025 - June 2025',
     startYear: 2025,
-    startMonth: 5,
+    startMonth: 4,
     endYear: 2025,
     endMonth: 6,
     tags: ['French'],
     detail: ['Explore Program funded by the Government of Canada'],
-    direction: ExpCardDirection.Right
+    direction: ExpCardDirection.Left
   },
   {
     place: 'University of Toronto',
@@ -99,7 +111,7 @@ export const eduExp: ExpCardItem[] = [
     startYear: 2024,
     startMonth: 9,
     endYear: 2025,
-    endMonth: 10,
+    endMonth: 11,
     tags: [''],
     direction: ExpCardDirection.Left
   },
@@ -108,10 +120,10 @@ export const eduExp: ExpCardItem[] = [
     title: 'Bachelor of Engineering, Mechatronics Engineering',
     location: 'Hangzhou, China',
     date: '2016 - 2020',
-    startYear: 2016,
-    startMonth: 9,
+    startYear: 2018,
+    startMonth: 5,
     endYear: 2020,
-    endMonth: 6,
+    endMonth: 7,
     tags: [''],
     direction: ExpCardDirection.Left
   },
@@ -121,11 +133,11 @@ export const eduExp: ExpCardItem[] = [
     location: 'Palaiseau, France',
     date: 'September 2018 - March 2019',
     startYear: 2018,
-    startMonth: 9,
+    startMonth: 8,
     endYear: 2019,
     endMonth: 3,
     tags: [''],
-    direction: ExpCardDirection.Right
+    direction: ExpCardDirection.Left
   },
   {
     place: 'Georgia Institute of Technology',
@@ -133,10 +145,38 @@ export const eduExp: ExpCardItem[] = [
     location: 'Atlanta, GA',
     date: 'July 2018 - August 2018',
     startYear: 2018,
-    startMonth: 7,
+    startMonth: 6,
     endYear: 2018,
     endMonth: 8,
     tags: [''],
-    direction: ExpCardDirection.Right
+    direction: ExpCardDirection.Left
+  }
+]
+
+
+export const lifeExp: ExpCardItem[] = [
+  {
+    place: 'Moved to Canada',
+    title: '',
+    location: 'Toronto, ON',
+    date: 'July 2024',
+    startYear: 2024,
+    startMonth: 6,
+    endYear: 2024,
+    endMonth: 8,
+    tags: [''],
+    direction: ExpCardDirection.Left
+  },
+  {
+    place: 'Received Immigrant Visa to Canada',
+    title: '',
+    location: '',
+    date: 'November 2023',
+    startYear: 2023,
+    startMonth: 10,
+    endYear: 2023,
+    endMonth: 12,
+    tags: [''],
+    direction: ExpCardDirection.Left
   }
 ]
