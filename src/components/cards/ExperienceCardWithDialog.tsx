@@ -4,27 +4,23 @@ import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import clsx from 'clsx'
 import { ExpCardItem } from '@/data/experiences'
-import { ExperienceCard } from './ExperienceCard'
-import { MONTH_HEIGHT } from '@/lib/date'
+import { ExperienceCard } from '@/components/cards/ExperienceCard'
 
 interface Props {
-  experience: ExpCardItem;
-  className?: string;
-  minHeight?: number
+  experience: ExpCardItem
+  spanPx: number
+  compact: boolean
 }
 
 export const ExperienceCardWithDialog = forwardRef<HTMLDivElement, Props>(
-  ({ experience, className, minHeight = 120 }, ref) => {
-    const months = (experience.endYear * 12 + (experience.endMonth ?? 1)) - (experience.startYear * 12 + (experience.startMonth ?? 1))
-    const spanPx = months * MONTH_HEIGHT
-    const compact = (spanPx - MONTH_HEIGHT) < minHeight
-    const shellCls = clsx('flex flex-col w-full h-full', className)
+  ({ experience, spanPx, compact }, ref) => {
+    const shellCls = 'flex flex-col w-full h-full experience-card h-full w-80 sm:w-96 lg:w-[26rem] rounded-xl border bg-background hover:shadow-lg'
 
     return compact ? (
       <Dialog>
         <DialogTrigger asChild>
           <Card ref={ref} style={{ height: spanPx }}
-                className={clsx(shellCls, 'cursor-pointer overflow-hidden hover:shadow-lg')}>
+                className={clsx(shellCls, 'cursor-pointer overflow-hidden')}>
             <ExperienceCard experience={experience}/>
           </Card>
         </DialogTrigger>
@@ -36,7 +32,7 @@ export const ExperienceCardWithDialog = forwardRef<HTMLDivElement, Props>(
         </DialogContent>
       </Dialog>
     ) : (
-      <Card ref={ref} className={clsx(shellCls, 'hover:shadow-lg')}>
+      <Card ref={ref} className={shellCls}>
         <ExperienceCard experience={experience}/>
       </Card>
     )
