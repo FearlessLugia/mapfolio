@@ -32,24 +32,34 @@ export default function AdminPage() {
   }, [])
 
   async function handleSignIn(formData: FormData) {
-    const result = await signInWithEmail(formData)
+    try {
+      const result = await signInWithEmail(formData)
 
-    if (result.success) {
+      if (result.success) {
+        toast.success('Sign In Successful', {
+          description: 'Redirecting to upload page'
+        })
 
-
-      toast.success('Sign In Successful', {
-        description: 'Redirecting to upload page'
-      })
-
-      setTimeout(() => {
-        router.push(result.callbackURL)
-        // Force refresh the navbar
-        router.refresh()
-      }, 1000)
-    } else {
-      toast.error('Sign In Failed', {
-        description: result.message
-      })
+        setTimeout(() => {
+          router.push(result.callbackURL)
+          // Force refresh the navbar
+          router.refresh()
+        }, 1000)
+      } else {
+        toast.error('Sign In Failed', {
+          description: result.message
+        })
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        toast.error('Sign In Failed', {
+          description: err.message
+        })
+      } else {
+        toast.error('Sign In Failed', {
+          description: 'Unknown error'
+        })
+      }
     }
   }
 
