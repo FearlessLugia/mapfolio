@@ -4,6 +4,8 @@ import * as exifr from 'exifr'
 import { db } from '@/lib/prisma'
 import { Photo, PhotoStatus, Prisma } from '@prisma/client'
 import sharp from 'sharp'
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
 
 const s3Client = new S3Client({
   endpoint: process.env.SPACES_ENDPOINT,
@@ -38,6 +40,14 @@ async function reverseGeocodeWithMapbox(lat: number, lon: number) {
 }
 
 export async function POST(req: NextRequest) {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  })
+
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  
   const contentType = req.headers.get('content-type')
   if (!contentType || !contentType.includes('multipart/form-data')) {
     return NextResponse.json(
