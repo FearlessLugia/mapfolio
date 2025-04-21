@@ -1,5 +1,6 @@
 'use client'
-import React, { forwardRef } from 'react'
+
+import { forwardRef } from 'react'
 import { Card } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import clsx from 'clsx'
@@ -14,13 +15,15 @@ interface Props {
 
 export const ExperienceCardWithDialog = forwardRef<HTMLDivElement, Props>(
   ({ experience, spanPx, compact }, ref) => {
-    const shellCls = 'flex flex-col w-full h-full experience-card h-full w-80 sm:w-96 lg:w-[26rem] rounded-xl border bg-background hover:shadow-lg'
+    const baseCls = 'flex flex-col h-full rounded-xl border bg-background hover:shadow-lg w-80 sm:w-96 lg:w-[26rem]'
+    const shiftCls = experience.isLarge ? 'translate-x-4' : ''
+    const common = clsx(baseCls, shiftCls, { 'cursor-pointer overflow-hidden': compact })
 
     return compact ? (
       <Dialog>
         <DialogTrigger asChild>
           <Card ref={ref} style={{ height: spanPx }}
-                className={clsx(shellCls, 'cursor-pointer overflow-hidden')}>
+                className={common}>
             <ExperienceCard experience={experience}/>
           </Card>
         </DialogTrigger>
@@ -32,7 +35,7 @@ export const ExperienceCardWithDialog = forwardRef<HTMLDivElement, Props>(
         </DialogContent>
       </Dialog>
     ) : (
-      <Card ref={ref} className={shellCls}>
+      <Card ref={ref} className={common}>
         <ExperienceCard experience={experience}/>
       </Card>
     )
