@@ -6,6 +6,10 @@ Created by: Kiiro Huang (1011781957)
 
 E-mail: kiiro.huang@mail.utoronto.ca
 
+## Video Demo
+
+[![Mapfolio Video Demo](https://img.youtube.com/vi/AoNDha2fcac/maxresdefault.jpg)](https://youtu.be/AoNDha2fcac)
+
 ## Motivation
 
 For a Software Development Engineer (SDE), a well-crafted personal portfolio is essential to differentiate myself from
@@ -16,18 +20,18 @@ and engagingly. Given my extensive travels and photography from all over the wor
 geographically display my photos on a world map.
 
 Creating _Mapfolio_ offers an excellent opportunity to enhance my expertise in a wide range of web development
-technologies. This includes implementing sophisticated 3D visual effects using Three.js to demonstrate advanced
+technologies. This includes implementing fancy visual effects using GSAP to demonstrate advanced
 front-end skills, seamless integration with cloud storage services for efficient file management, and robust database
 management. Moreover, through direct interaction with widely-used Map APIs, I can build practical experience relevant to
 industries such as e-commerce, logistics, food delivery, travel planning, and ride-sharing services.
-react three fiber
 
-The primary users of _Mapfolio_ include potential employers, recruiters, and other interested visitors. By integrating an
-interactive, geospatial-driven approach, _Mapfolio_ will allow users to explore my photography collection from various
-global locations, offering a richer and more immersive experience than conventional portfolio sites. Furthermore, this
-project holds broader educational significance. If released as an open-source resource, _Mapfolio_'s design and
-architecture can provide valuable insights to others aiming to construct their own personal websites. Users could adapt
-and extend the innovative features to create interactive experiences tailored to their specific requirements.
+The primary users of _Mapfolio_ include potential employers, recruiters, and other interested visitors. By integrating
+an interactive, geospatial-driven approach, _Mapfolio_ will allow users to explore my photography collection from
+various global locations, offering a richer and more immersive experience than conventional portfolio sites.
+Furthermore, this project holds broader educational significance. If released as an open-source resource, _Mapfolio_'s
+design and architecture can provide valuable insights to others aiming to construct their own personal websites. Users
+could adapt and extend the innovative features to create interactive experiences tailored to their specific
+requirements.
 
 ## Objectives
 
@@ -37,39 +41,34 @@ intuitively interact with the map to view photographs captured at specific globa
 experience with contextual geographic metadata.
 
 To complement this interactive visual showcase, the portfolio will include essential professional components such as a
-landing page, a resume section, a 3D timeline exhibiting my previous experiences, and a contact form for potential
-employers.
+landing page, a timeline exhibiting my previous experiences, project highlights, and correspondence to find me.
 
 ## Technical Stack
 
-To meet these objectives, the project will employ **Next.js** as a full-stack solution due to its SEO-friendly features.
-**TypeScript** will be used for both front-end and back-end development to ensure type safety and consistency. Usage of
-**Tailwind CSS** and **shadcn/ui** will ensure a responsive frontend.
+_Mapfolio_ employs **Next.js** for both front-end and back-end development, providing SEO-friendly and responsive
+interfaces.
+**TypeScript** ensures type safety and maintainability. The visual design uses **Tailwind CSS** and **shadcn/ui**
+components, while advanced animations and visual effects are created using **GSAP**.
 
-Supabase
-Data management including photo metadata and user data will be handled through a **PostgreSQL** database, combined with
-**Prisma** ORM. **Amazon S3** is selected for image storage, as it provides cloud-based reliability and scalability.
-DigitalOcean Spaces is a S3-compatible object storage service with built-in CDN.
-CDN is used to cache and deliver content closer to users.
+Data management including photo metadata and user data is handled through **Prisma** ORM with **PostgreSQL** database
+hosted by **Supabase**, with images stored securely in **DigitalOcean Spaces**, an **Amazon
+S3**-compatible storage service. Built-in **CDN** is used to cache and deliver content closer to users.
 
-Integration with external services like **Mapbox API** will provide basic map and geographic data. **Three.js**
-will be used as client components to add fancy 3D effects for the world map, landing page, and personal timeline.
+Integration with external services like **Mapbox API** will provide interactive map functionalities and geocoding
+features. **Better Auth** will be used for user authentication, ensuring secure access to the photo upload feature.
 
 ## Features
 
 ### Photo Upload and File Storage
 
-Photos will be uploaded via a secure back-end API, handling file uploads using the **multer** library, and subsequently
-extract location data (latitude and longitude) from each photo using the **exifr** library. To enhance user
-experience, this geographic information will be translated into readable country and city names through **reverse
-geocoding** via the Mapbox API. These photo metadata will be stored in a PostgreSQL database.
+Photos will be uploaded via a secure back-end API, handling file uploads and subsequently extract location data (
+latitude and longitude) from each photo using the **exifr** library. To enhance user experience, this geographic
+information will be translated into readable country and city names through **reverse geocoding** via the Mapbox API.
+These photo metadata will be stored in the PostgreSQL database.
 
-Photos will be stored securely in **Amazon Simple Storage Service** (Amazon S3) to ensure fast and reliable access.
-I will create a bucket and apply the **Standard Storage Class** to store photos. Also, no automatic lifecycle deletion
-policy will be configured that might automatically delete photos.
-
-To optimize storage efficiency and for simplicity, uploads will be restricted to JPG/JPEG file formats with a maximum
-allowed size of 2 MB, slightly above the typical size of approximately 1.5 MB per photo.
+Uploaded photos are securely stored in **DigitalOcean Space** to ensure fast and reliable access. No automatic lifecycle
+deletion policy will be configured that might automatically delete photos. To optimize storage efficiency and for
+simplicity, uploads will be restricted to `JPG`/`JPEG` file formats with a maximum allowed size of 10 MB per photo.
 
 Additionally, smaller-sized **thumbnail** versions of each image will be generated to optimize performance and reduce
 load times when viewing multiple images simultaneously on the map interface. Images and thumbnails will each have
@@ -77,108 +76,89 @@ distinct public URLs.
 
 #### Design of Data Structure (Photo Metadata)
 
-- ID: Integer
-- Photo Name: String
-- S3 URL: String
-- S3 Thumbnail URL: String
-- Photo Location Latitude: Double
-- Photo Location Longitude: Double
-- Photo Country: String
-- Photo City: String
-- Photo Timestamp: Timestamp
-- Uploaded Timestamp: Timestamp
+```prisma
+model Photo {
+  id                Int         @id @default(autoincrement())
+  photoName         String      
+  url               String      
+  thumbnailUrl      String      
+  photoCountry      String?     
+  photoCity         String?     
+  photoTimestamp    DateTime?   
+  uploadedTimestamp DateTime    @default(now())
+  status            PhotoStatus @default(Waiting)
 
-Since the photo metadata stored in PostgreSQL, PostGIS extension may be used to store and query geographic data
-efficiently. Use Supabase to manage the PostgreSQL database, which is a cloud-based service that provides a fully
-managed
-PostgreSQL database with built-in support for PostGIS. This will allow me to easily store and query geographic data
-using SQL queries, without having to set up and manage the database myself.
+  photoLocation Json? @map("photoLocation")
+}
+```
 
-### User Authentication
-
-Given the personal nature of this portfolio, photos will only be uploaded by myself. Instead of a publicly accessible
-sign-up page, I will manually create a user account directly in the PostgreSQL database, with a password hashed securely
-before storage. The back-end will include a secure sign-in endpoint to authenticate users using **JSON Web Token (JWT)**
-and **cookie-session**. Subsequent API requests such as photo uploads will verify this token to ensure that only
-authorized users can access the service.
-
-#### Design of Data Structure (User)
-
-- ID: Integer
-- Username: String
-- Password: String
+Since the photo metadata stored in PostgreSQL, **PostGIS** extension is used to store and query geographic data
+efficiently. However, prisma does not support PostGIS natively, so `Json` type is applied to store the location
+information. Nonetheless, PostGIS can be leveraged to support more advanced features, such as searching for nearby
+photos.
 
 ### Interactive Map
 
-The interactive map will serve as the central feature of the portfolio. When loading, it will extract all the location
-information from the database and generate geographical markers. Users will be able to smoothly zoom and pan across the
-globe, with location markers dynamically clustering or separating depending on zoom levels. Each marker, upon selection,
-will display a thumbnail preview and basic metadata such as city, country, and capture date, providing context before
-the user views the complete collection.
+The interactive map serves as the central feature of the portfolio. Upon loading, it retrieves all photo information
+from the database and generates geographical markers accordingly. Users is able to smoothly zoom and pan across the
+globe, with location markers dynamically clustering or separating depending on zoom levels. Clicking an individual
+marker displays the original photo along with its associated city and country. Clicking a cluster marker opens a dialog
+showcasing all photos within that cluster, and clicking a specific photo within the dialog then brings up a detailed
+view of the image.
+
+### User Authentication and Authorization
+
+Given the personal nature of this portfolio, photos can only be uploaded by myself. The sign-up page, admin page, and
+upload page are only accessible during development. In the production environment, these pages will be routed to a
+`not-found` page, and `Upload` and `Admin` button will not appear on Navbar. During development, if the user is not
+signed in, the `Upload` and `Admin` button will be hidden from the Navbar, and attempting to access `/upload` will
+redirect to the `/admin` page. This setup ensures both secure access and a clean interface for public users.
+
+The back-end will include a secure `sign-up` and `admin` endpoint to authenticate users using **Better Auth**.
+Subsequent API requests like photo uploads will verify current session to ensure that only authorized users can access
+the service.
 
 ### Cost
 
 #### DigitalOcean
 
-DigitalOcean Spaces is a S3-compatible object storage service with built-in CDN. The free tier
-
-DigitalOcean offers $200 credits for student, but also required credit card information when signing up.
-
-[//]: # (#### Amazon Web Service &#40;AWS&#41;)
-
-[//]: # (For a new signup AWS account, S3's free tier offers a 12-month free trial that provides 5GB of Amazon S3 storage in the)
-
-[//]: # (S3 Standard storage class; 20,000 GET Requests; 2,000 PUT, COPY, POST, or LIST Requests; and 100 GB of Data Transfer)
-
-[//]: # (Out each month. Signing up for AWS requires credit card information.)
-
-[//]: # ()
-
-[//]: # (Given that each photo will typically be around 1.5 MB, with a strict size limit of 2 MB per upload, I estimate storing)
-
-[//]: # (approximately 500 files totaling around 1 GB of storage capacity, along with their thumbnails, adding roughly 50 MB of)
-
-[//]: # (additional storage, which is well within the free tier limits.)
+DigitalOcean Spaces is a S3-compatible object storage service with built-in CDN. DigitalOcean offers $200 credits for
+student through its free tier, although credit card information is required during sign-up.
 
 #### Mapbox API
 
-The project will utilize the Mapbox API for both front-end (interactive map rendering) and back-end processes (reverse
-geocoding). Mapbox provides a free-tier plan sufficient for personal projects, which is adequate to support expected
-request volumes during development and initial deployment. Signing up for Mapbox API requires credit card information.
+The project utilizes the Mapbox API for both front-end map rendering and back-end reverse geocoding. Mapbox provides a
+free-tier plan sufficient for personal projects, which is adequate to support expected request volumes during
+development and initial deployment. Similar to DigitalOcean, signing up for Mapbox API requires credit card information.
 
-### Deployment (Optional)
+#### Deployment
 
-The website will be deployed on Vercel for both back-end and front-end, which is the recommended deployment platform for
-Next.js applications. In order to be a free solution, back-end will adopt the serverless option. For the domain name, I
-will use my GitHub io page. Front-end can also be deployed on Amazon S3 static website hosting.
+The website is deployed on Vercel, which is the recommended deployment platform for Next.js applications. Deployment is
+free of charge. To improve accessibility and memorability, the project also shortens the default `vercel.app` subdomain
+link.
 
-### Other Personal Portfolio Features (Optional)
+### Other Personal Portfolio Features
 
-I will also try to include the following features using Three.js to make my portfolio more attractive:
+I also include the following features using **GSAP** to make my portfolio more attractive:
 
-- Landing Page
-- 3D Personal Timeline
+- Landing page
+- Interactive experience timeline
+- Map preview section
+- Project highlights
+- Site information and contact section
 
-This will also include the ordering of my previous GitHub projects and links to my GitHub repositories.
+This portfolio also includes a list of my previous projects along with direct links to my corresponding GitHub
+repositories.
 
 ### API Design
 
-This system exposes two end-user API endpoints:
-
-- Photo Upload
-- User Sign-in
-
-Several internal APIs will be used to support the front-end map display and interactive features:
-
-- Map
-- Map Interactive
-- Photo
+Besides user authentication and authorization, this system exposes an end-user API endpoint for photo uploading.
 
 #### Photo Upload API
 
 API Endpoint: `POST /api/upload`
 
-Authorization: Cookie
+Authorization: Session
 
 ##### Upload API Workflow
 
@@ -233,182 +213,68 @@ Authorization: Cookie
 }
 ```
 
-#### User Sign-in API
-
-Endpoint: `POST /api/signin`
-
-##### Request Body
-
-```json
-{
-  "username": "kiiro",
-  "password": "password"
-}
-```
-
-##### Response Body
-
-```json
-{
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RAYS5jbSIsImlkIjo0LCJpYXQiOjE3NDIxNzcwMTZ9.4flop1KklsTZrFlhUokg0onZWgIhME2GtkU-i3N7hbg",
-  "username": "kiiro"
-}
-```
-
-##### Response Cookies
-
-| **Name** | **Value**        | **Domain** | **Path** | **Expires** | **HttpOnly** | **Secure** |
-|----------|------------------|------------|----------|-------------|--------------|------------|
-| session  | eyJqd3QiOiJle... | localhost  | /        | Session     | true         | false      |
-
-#### Map API
-
-Endpoint: `GET /api/map`
-
-##### Map API Workflow
-
-1. Front-end requests the map API.
-2. Back-end retrieves all the location information from PostgreSQL database.
-3. Back-end returns the location information to the front-end.
-4. Front-end displays the map with the location information.
-5. Front-end displays the first photo of each location on the map.
-
-Request Body: None
-
-##### Response
-
-```json
-{
-  "locations": [
-    {
-      "latitude": 43.653225,
-      "longitude": -79.383186,
-      "photoUrl": "https://s3.amazonaws.com/bucket/photo1-thumbnail.jpg",
-      "city": "Toronto",
-      "country": "Canada",
-      "photoCount": 5
-    }
-  ]
-}
-```
-
-#### Map Interactive API
-
-Endpoint: `GET /api/map?latitude={latitude}&longitude={longitude}`
-
-##### Map Interactive API Workflow
-
-1. User clicks on a marker on the map.
-2. Front-end requests the map interactive API with the latitude and longitude.
-3. Back-end retrieves all the photos taken at that location from the database.
-4. Back-end returns the photos to the front-end.
-5. Front-end displays the photos taken at that location.
-
-##### Query Parameters
-
-- latitude (Double)
-- longitude (Double)
-
-##### Response
-
-```json
-{
-  "photos": [
-    {
-      "photoUrl": "https://s3.amazonaws.com/bucket/photo1.jpg",
-      "thumbnailUrl": "https://s3.amazonaws.com/bucket/photo1-thumbnail.jpg",
-      "photoTimestamp": "2021-09-01T12:00:00Z"
-    }
-  ],
-  "location": {
-    "city": "Toronto",
-    "country": "Canada"
-  }
-}
-```
-
-#### Photo API
-
-Endpoint: `GET /api/photos/{photoId}`
-
-##### Photo API Workflow
-
-1. User clicks on a photo.
-2. Front-end requests the photo API with the photo ID.
-3. Back-end retrieves the photo information from the database.
-4. Back-end returns the photo information to the front-end.
-5. Front-end displays the photo and the full photo.
-
-##### Query Parameters
-
-- photoId (Integer)
-
-##### Response
-
-```json
-{
-  "id": 1,
-  "photoName": "photo1.jpg",
-  "s3Url": "https://s3.amazonaws.com/bucket/photo1.jpg",
-  "s3ThumbnailUrl": "https://s3.amazonaws.com/bucket/photo1-thumbnail.jpg",
-  "photoLocationLatitude": 43.653225,
-  "photoLocationLongitude": -79.383186,
-  "photoCountry": "Canada",
-  "photoCity": "Toronto",
-  "photoTimestamp": "2021-09-01T12:00:00Z",
-  "uploadedTimestamp": "2025-03-01T12:00:00Z"
-}
-```
-
 ## User Guide
 
 ### Home Page
 
 Endpoint: `/`
 
-Home page of _Mapfolio_.
+Home page of _Mapfolio_ features the Landing Page, My Experience Timeline, My Projects, Site Information and Contact Me.
 
 ### Gallery Page
 
 Endpoint: `/gallery`
 
-Gallery Page shows all the photos, even if they don't contain location information.
+Gallery page displays all uploaded photos.
 
 ### Map Page
 
 Endpoint: `/map`
 
-Map Page has an interactive map.
-
-Clicking on an individual photo will refer to the detail dialog of the whole image, while clicking on a cluster will
-refer to the dialog containing all the photos in this location.
+Map page features an interactive map. Clicking an individual marker opens a detailed view of that photo, while clicking
+a cluster marker opens a dialog showing all photos from that location.
 
 ### Upload Page
 
-Endpoint: `/upload
+Endpoint: `/upload`
 
-Admin can upload photos on Upload Page.
+Upload page allows the admin to upload photos. This page is only accessible in development mode.
 
-`
+### Admin Page
+
+Endpoint: `/admin`
+
+Admin page is used for signing in and signing out of the system. This page is only accessible in development mode.
+
+### Sign-up Page
+
+Endpoint: `/signup`
+
+Sign-up page is used for registering a new account. This page is only accessible in development mode.
 
 ## Development Guide
 
-Install dependencies
+### Environment setup and configuration
+
+#### Install dependencies
 
 ```bash
 npm install
 ```
 
-Set up environment
+If you encounter issues during upload (particularly on macOS), it may be due to the `sharp` library. Try deleting the
+`node_modules` directory and reinstalling dependencies. See detailed
+information [here](https://sharp.pixelplumbing.com/install/) for `sharp` installation.
+
+#### Set up environment
+
+Copy `.env.example` to `.env`.
 
 ```bash
-# Copy .env.example to .env
 cp .env.example .env
 ```
 
-Update the `.env` using `Credentials for Grading`.
-
-### Credentials for Grading
+Update the `.env` file with your own environment variables. The `.env` file should look like this:
 
 ```dotenv
 DATABASE_URL=your-database-url
@@ -421,15 +287,94 @@ SPACES_ENDPOINT=https://tor1.digitaloceanspaces.com
 
 MAPBOX_ACCESS_TOKEN=your-mapbox-access-token
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your-mapbox-access-token
+
+NEXT_PUBLIC_APP_URL=your-public-app-url
+
+BETTER_AUTH_SECRET=your-better-auth-secret
+BETTER_AUTH_URL=your-public-app-url
 ```
+
+### Database Initialization
+
+`DATABASE_URL` is the connection string for your PostgreSQL database. In this project, I use Supabase as a publicly
+accessible hosted database solution. The connection string can be found in the following:
+
+- Go to your Supabase project
+- Click on `Connect` on the top navigation bar
+- In the `Connection String` Tab, copy the `Session pooler` connection string
+
+### Cloud Storage Configuration
+
+`SPACES_KEY` and `SPACES_SECRET` are the access key and secret key for your DigitalOcean Spaces account. `SPACES_KEY`
+refers to the `Access Key ID`, which can be found under `Spaces Object Storage` -> `Settings` Tab. `SPACES_SECRET` is
+the `Secret Key` which is only displayed once at the time of creation.
+
+### Mapbox API Configuration
+
+`MAPBOX_ACCESS_TOKEN` and `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` are the access token for your Mapbox account. You can
+find it in the dashboard of your Mapbox account. It is located on the right of the page called `Toekns`. The
+`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is used in the front-end, while `MAPBOX_ACCESS_TOKEN` is used in the back-end. You can
+use the same value for both.
+
+### Better Auth Configuration
+
+`BETTER_AUTH_SECRET` is a random value used by the `Better-Auth` library for encryption and generating hashes. You can
+generate one [here](https://www.better-auth.com/docs/installation).
+
+### Local Development
+
+#### Local Environment Variables
+
+If you want to run the project locally, you need to have a `.env.local` file in the root directory with the following
+environment variables:
+
+```dotenv
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+BETTER_AUTH_URL=http://localhost:3000
+```
+
+This will allow you to run the project locally.
+
+#### Run the development server
 
 ```bash
 npm run dev
 ```
 
+This command will start the development server on `http://localhost:3000`.
+
+### Credentials for Grading
+
+Detail value has been sent to the instructor by email.
+
 ## Deployment Information
 
-vercel
+### Live URL
+
+https://mapfolio-kiiros.vercel.app/
+
+### Deployment Platform Details
+
+This project is hosted on **Vercel**.
+
+#### Build the project
+
+```bash
+npm run build
+```
+
+This command will build the project for production. It will create an optimized version of the project in the `.next`
+directory.
+
+##### Deploy to Vercel
+
+```bash
+npm run deploy
+```
+
+This command will deploy the project to Vercel.
+
+If it asks for installing the `vercel` package, just type `y` to proceed.
 
 ## Individual Contributions
 
@@ -437,6 +382,15 @@ Kiiro Huang: All
 
 ## Lessons Learned and Concluding Remarks
 
-Advanced Tech Stack
+Throughout the development of this project, I acquired valuable insights and significantly enhanced my technical
+capabilities. I gained hands-on experience on advanced tech stack to deepen my expertise in modern web frameworks, cloud
+services, and database management, ensuring my skills remain relevant and competitive in the industry.
 
-Performance: Thumbnails, Cache
+One of the standout benefits of this project is its practical applicability. The final deliverable is fully functional
+and immediately ready for inclusion in my professional portfolio, making it highly beneficial for future job
+applications and interviews.
+
+Additionally, I put a lot of emphasis on performance optimization to improve user experience and reduce loading time. I
+implemented different strategies such as utilizing CDN services, generating optimized image thumbnails, employing
+skeleton loaders to enhance perceived performance, and adopting Static Site Generation (SSG) and Client-Side
+Generation (CSG) for efficient rendering.
