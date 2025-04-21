@@ -6,9 +6,10 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  // When deployed, the sign-up page should redirect to a 404 page
-  // Never expose the sign-up page in production
-  if (process.env.NODE_ENV === 'production' && pathname === '/signup') {
+  // When deployed, the sign-up, sign-in, and upload page should redirect to a 404 page
+  // Never expose the these pages in production
+  if (process.env.NODE_ENV === 'production' &&
+    (pathname === '/signup' || pathname === '/admin' || pathname === '/upload')) {
     return NextResponse.redirect(new URL('/not-found', request.url))
   }
 
@@ -21,5 +22,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/signup', '/upload']
+  matcher: ['/signup', '/upload', '/admin']
 }
