@@ -26,6 +26,6 @@ export default function MapPreview() {
   }, [])
 
   return (
-    <div ref={mapContainer} className='w-full h-screen'/>
+    <div ref={mapContainer} className='w-full h-full'/>
   )
 }

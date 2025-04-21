@@ -29,9 +29,10 @@ export const About = () => {
           </div>
         </div>
 
-        <div className="w-full md:w-auto md:h-auto md:justify-self-end ">
-          <div className="w-full h-full md:w-100 md:h-100 rounded-lg overflow-hidden border flex items-center justify-center">
-            <MapPreview />
+        <div className="w-full md:w-auto md:justify-self-end">
+          <div
+            className="w-full md:w-96 h-64 md:h-96 rounded-lg overflow-hidden border flex items-center justify-center">
+            <MapPreview/>
           </div>
         </div>
       </div>
