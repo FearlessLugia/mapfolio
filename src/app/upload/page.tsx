@@ -23,7 +23,7 @@ export default function UploadPage() {
   const [uploadStatuses, setUploadStatuses] = useState<UploadStatus[]>([])
 
   const MAX_SIZE_MB = 10
-  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
+  const ALLOWED_TYPES = ['image/jpeg', 'image/jpg']
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files
@@ -147,7 +147,7 @@ export default function UploadPage() {
               onChange={handleFileChange}
             />
             {/* Button that triggers the hidden file input */}
-            <Button variant='outline' onClick={handleClick}>Select Files</Button>
+            <Button type="button" variant='outline' onClick={handleClick}>Select Files</Button>
 
             <Button type='submit'>Upload</Button>
           </div>

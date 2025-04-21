@@ -242,7 +242,7 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
                   ? `${selectedPhotos[0].photoCity ?? ''}${
                     selectedPhotos[0].photoCity && selectedPhotos[0].photoCountry ? ', ' : ''
                   }${selectedPhotos[0].photoCountry ?? ''}`
-                  : selectedPhotos[0].photoName ?? 'Mysterious Photo'}
+                  : 'Mysterious Place...'}
               </DialogTitle>
             ) : (
               <DialogTitle>Cluster Gallery</DialogTitle>

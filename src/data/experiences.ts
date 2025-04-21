@@ -88,7 +88,7 @@ export const workExp: ExpCardItem[] = [
     startYear: 2,
     startMonth: 9,
     endYear: 3,
-    endMonth: 4,
+    endMonth: 1,
     tags: [''],
     direction: ExpCardDirection.Right,
     isLarge: false
