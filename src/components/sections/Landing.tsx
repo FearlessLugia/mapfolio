@@ -1,6 +1,6 @@
 export const Landing = () => {
   return (
-    <section className='bg-white bg-cover bg-no-repeat bg-center h-[calc(100vh-76px)]'>
+    <section className='relative bg-white bg-cover bg-no-repeat bg-center h-[calc(100vh-76px)]'>
       <div
         className='sm:px-16 px-6 max-w-7xl mx-auto gap-5 absolute inset-0 flex flex-col justify-center items-center'
       >
