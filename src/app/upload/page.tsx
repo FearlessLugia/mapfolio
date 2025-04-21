@@ -92,7 +92,7 @@ export default function UploadPage() {
             if (xhr.status === 200) {
               const res = JSON.parse(xhr.responseText)
               updatedStatuses[index].status = PhotoStatus.Uploaded
-              updatedStatuses[index].url = res.dbRecords?.[0]?.s3Url || null
+              updatedStatuses[index].url = res.dbRecords?.[0]?.url || null
             } else {
               updatedStatuses[index].status = PhotoStatus.Error
             }
