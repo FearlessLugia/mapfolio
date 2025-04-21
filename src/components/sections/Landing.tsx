@@ -11,7 +11,7 @@ export const Landing = () => {
           </h1>
           <p
             className='text-black font-medium lg:text-[30px] sm:text-[26px] xs:text-[20px] text-[16px] lg:leading-[40px] mt-2 text-white-100'>
-            Full-Stack Web Development Engineer based in Toronto, ON
+            Full-Stack Development Engineer based in Toronto, ON
           </p>
           <br/>
           <br/>
