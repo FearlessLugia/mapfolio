@@ -2,9 +2,7 @@
 
 A full-stack personal portfolio website with an interactive photo map.
 
-Created by: Kiiro Huang (1011781957)
-
-E-mail: kiiro.huang@mail.utoronto.ca
+Created by: Kiiro Huang
 
 ## Video Demo
 
@@ -61,8 +59,8 @@ features. **Better Auth** will be used for user authentication, ensuring secure 
 
 ### Photo Upload and File Storage
 
-Photos will be uploaded via a secure back-end API, handling file uploads and subsequently extract location data (
-latitude and longitude) from each photo using the **exifr** library. To enhance user experience, this geographic
+Photos will be uploaded via a secure back-end API, handling file uploads and subsequently extract location data
+(latitude and longitude) from each photo using the **exifr** library. To enhance user experience, this geographic
 information will be translated into readable country and city names through **reverse geocoding** via the Mapbox API.
 These photo metadata will be stored in the PostgreSQL database.
 
@@ -343,10 +341,6 @@ npm run dev
 
 This command will start the development server on `http://localhost:3000`.
 
-### Credentials for Grading
-
-Detail value has been sent to the instructor by email.
-
 ## Deployment Information
 
 ### Live URL
@@ -366,7 +360,7 @@ npm run build
 This command will build the project for production. It will create an optimized version of the project in the `.next`
 directory.
 
-##### Deploy to Vercel
+#### Deploy to Vercel
 
 ```bash
 npm run deploy
