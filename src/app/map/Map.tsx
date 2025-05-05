@@ -249,11 +249,10 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
             )}
           </DialogHeader>
 
-          {/* Single Photo => show large image right away. Clicking => detail dialog */}
+          {/* Single Photo => show large image right away. */}
           {selectedPhotos.length === 1 ? (
             <div
-              className='relative w-full aspect-video overflow-hidden rounded cursor-pointer'
-              onClick={() => showPhotoDetail(selectedPhotos[0])}
+              className='relative w-full aspect-video overflow-hidden rounded'
             >
               {!imageLoaded && <Skeleton className='absolute inset-0' />}
               <Image
