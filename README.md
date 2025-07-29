@@ -132,8 +132,7 @@ development and initial deployment. Similar to DigitalOcean, signing up for Mapb
 #### Deployment
 
 The website is deployed on Vercel, which is the recommended deployment platform for Next.js applications. Deployment is
-free of charge. To improve accessibility and memorability, the project also shortens the default `vercel.app` subdomain
-link.
+free of charge. To improve accessibility and memorability, the site now uses a custom domain.
 
 ### Other Personal Portfolio Features
 
@@ -345,7 +344,7 @@ This command will start the development server on `http://localhost:3000`.
 
 ### Live URL
 
-https://mapfolio-kiiros.vercel.app/
+https://kiiroh.tech
 
 ### Deployment Platform Details
 
