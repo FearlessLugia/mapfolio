@@ -21,14 +21,14 @@ export enum ExpCardDirection {
 export const workExp: ExpCardItem[] = [
   {
     place: 'Amazon',
-    title: 'Incoming SDE Intern',
+    title: 'Software Engineer Intern',
     location: 'Toronto, ON',
     date: 'June 2025 - September 2025',
     startYear: 7,
     startMonth: 5,
     endYear: 7,
     endMonth: 9,
-    tags: [''],
+    tags: ['Java', 'TypeScript', 'AWS', 'IaC'],
     direction: ExpCardDirection.Right,
     isLarge: false
   },
