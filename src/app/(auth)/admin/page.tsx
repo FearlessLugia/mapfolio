@@ -84,7 +84,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className='px-6 max-w-md mx-auto mt-10'>
+    <main className='px-6 max-w-md mx-auto mt-10 h-full w-full'>
       <h1 className='text-2xl font-bold mb-6'>Admin</h1>
 
       {!session ? (

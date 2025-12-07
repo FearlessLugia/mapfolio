@@ -230,7 +230,7 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
 
   return (
     <>
-      <div ref={mapContainer} className='w-full h-screen'/>
+      <div ref={mapContainer} className='w-full h-full'/>
 
       {/* MAIN DIALOG */}
       <Dialog open={dialogOpen} onOpenChange={handleMainDialogOpenChange}>

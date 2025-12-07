@@ -28,7 +28,7 @@ export default function RootLayout({ children }: Readonly<{
   return (
     <html lang='en'>
     <body
-      className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col h-screen`}
     >
 
     <Navbar/>
