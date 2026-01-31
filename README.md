@@ -2,8 +2,6 @@
 
 A full-stack personal portfolio website with an interactive photo map.
 
-Created by: Kiiro Huang
-
 ## Video Demo
 
 [![Mapfolio Video Demo](https://img.youtube.com/vi/AoNDha2fcac/maxresdefault.jpg)](https://youtu.be/AoNDha2fcac)
@@ -309,9 +307,10 @@ the `Secret Key` which is only displayed once at the time of creation.
 ### Mapbox API Configuration
 
 `MAPBOX_ACCESS_TOKEN` and `NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` are the access token for your Mapbox account. You can
-find it in the dashboard of your Mapbox account. It is located on the right of the page called `Toekns`. The
-`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is used in the front-end, while `MAPBOX_ACCESS_TOKEN` is used in the back-end. You can
-use the same value for both.
+find it in the dashboard of your Mapbox account. It is located on the right of the page called `Tokens`. 
+
+`NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN` is used in the front-end, while `MAPBOX_ACCESS_TOKEN` is used in the back-end. You 
+can use the same value for both.
 
 ### Better Auth Configuration
 
@@ -366,12 +365,6 @@ npm run deploy
 ```
 
 This command will deploy the project to Vercel.
-
-If it asks for installing the `vercel` package, just type `y` to proceed.
-
-## Individual Contributions
-
-Kiiro Huang: All
 
 ## Lessons Learned and Concluding Remarks
 
