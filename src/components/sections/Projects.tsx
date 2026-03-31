@@ -39,7 +39,7 @@ export const Projects = () => {
     <>
       <div
         ref={containerRef}
-        className='cards w-full max-w-[900px] mx-auto grid gap-y-[40px]'
+        className='cards w-full max-w-[900px] mx-auto grid'
         style={{ visibility: 'hidden' }}
       >
         {projects.map((item, i) => {
@@ -65,7 +65,8 @@ export const Projects = () => {
         .cards {
           --cards-count: 0;
           --card-height: 0px;
-          grid-template-rows: repeat(var(--cards-count), var(--card-height));
+          grid-template-columns: 1fr;
+          grid-auto-rows: auto;
         }
       `}</style>
     </>

@@ -23,7 +23,7 @@ export const ExperienceCardWithDialog = forwardRef<HTMLDivElement, Props>(
       <Dialog>
         <DialogTrigger asChild>
           <Card ref={ref} style={{ height: spanPx }}
-                className={common}>
+                className={common} suppressHydrationWarning>
             <ExperienceCard experience={experience}/>
           </Card>
         </DialogTrigger>
