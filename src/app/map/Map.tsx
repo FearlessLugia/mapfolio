@@ -171,8 +171,11 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
           const clusterPhotos = clusterPhotosMap.get(clusterId)
           if (!clusterPhotos || clusterPhotos.length === 0) return
 
-          // Use the first photo's thumbnail as the marker background
-          const sampleUrl = clusterPhotos[0].thumbnailUrl
+          // Randomize the photos in this cluster for gallery display and thumbnail selection
+          const shuffledClusterPhotos = [...clusterPhotos].sort(() => Math.random() - 0.5)
+
+          // Use a random photo's thumbnail as the marker background
+          const sampleUrl = shuffledClusterPhotos[0].thumbnailUrl
 
           const el = document.createElement('div')
           el.className =
@@ -186,9 +189,9 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
           badge.textContent = String(clusterCount)
           el.appendChild(badge)
 
-          // Clicking the cluster => open a gallery with these photos
+          // Clicking the cluster => open a gallery with these photos (shuffled)
           el.addEventListener('click', () => {
-            setSelectedPhotos(clusterPhotos)
+            setSelectedPhotos(shuffledClusterPhotos)
             setDialogOpen(true)
           })
 

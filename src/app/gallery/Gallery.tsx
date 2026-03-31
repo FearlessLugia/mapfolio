@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Photo } from '@prisma/client'
@@ -11,6 +11,11 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null)
   const [imageLoaded, setImageLoaded] = useState(false)
 
+  // Shuffle the photos array once when the component mounts or the photos prop changes
+  const shuffledPhotos = useMemo(() => {
+    return [...photos].sort(() => Math.random() - 0.5)
+  }, [photos])
+
   const openPhotoDetail = (photo: Photo) => {
     setSelectedPhoto(photo)
     setImageLoaded(false)
@@ -20,7 +25,7 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
   return (
     <>
       <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-        {photos.map((photo) => (
+        {shuffledPhotos.map((photo) => (
           <div
             key={photo.id}
             className='relative w-full aspect-[4/3] rounded overflow-hidden shadow cursor-pointer'
