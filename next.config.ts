@@ -6,9 +6,9 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'mapfolio.tor1.cdn.digitaloceanspaces.com',
+        hostname: '*.r2.dev',
         pathname: '/**',
-      },
+      }
     ],
   },
 }

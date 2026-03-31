@@ -47,7 +47,7 @@ interfaces.
 components, while advanced animations and visual effects are created using **GSAP**.
 
 Data management including photo metadata and user data is handled through **Prisma** ORM with **PostgreSQL** database
-hosted by **Supabase**, with images stored securely in **DigitalOcean Spaces**, an **Amazon
+hosted by **Supabase**, with images stored securely in **Cloudflare R2**, an **Amazon
 S3**-compatible storage service. Built-in **CDN** is used to cache and deliver content closer to users.
 
 Integration with external services like **Mapbox API** will provide interactive map functionalities and geocoding
@@ -62,7 +62,7 @@ Photos will be uploaded via a secure back-end API, handling file uploads and sub
 information will be translated into readable country and city names through **reverse geocoding** via the Mapbox API.
 These photo metadata will be stored in the PostgreSQL database.
 
-Uploaded photos are securely stored in **DigitalOcean Space** to ensure fast and reliable access. No automatic lifecycle
+Uploaded photos are securely stored in **Cloudflare R2** to ensure fast and reliable access. No automatic lifecycle
 deletion policy will be configured that might automatically delete photos. To optimize storage efficiency and for
 simplicity, uploads will be restricted to `JPG`/`JPEG` file formats with a maximum allowed size of 10 MB per photo.
 
@@ -116,16 +116,16 @@ the service.
 
 ### Cost
 
-#### DigitalOcean
+#### Cloudflare R2
 
-DigitalOcean Spaces is a S3-compatible object storage service with built-in CDN. DigitalOcean offers $200 credits for
-student through its free tier, although credit card information is required during sign-up.
+Cloudflare R2 is an S3-compatible object storage service with no egress fees. It provides a generous free tier that is
+suitable for personal projects.
 
 #### Mapbox API
 
 The project utilizes the Mapbox API for both front-end map rendering and back-end reverse geocoding. Mapbox provides a
 free-tier plan sufficient for personal projects, which is adequate to support expected request volumes during
-development and initial deployment. Similar to DigitalOcean, signing up for Mapbox API requires credit card information.
+development and initial deployment. Signing up for Mapbox API requires credit card information.
 
 #### Deployment
 
@@ -160,8 +160,8 @@ Authorization: Session
 1. User uploads photo in front-end and calls the back-end API.
 2. Back-end extracts location information from the photo and stores it in the database, with placeholders in properties
    of `Url` and `ThumbnailUrl`.
-3. Back-end uploads the photo to Amazon S3.
-4. Back-end generates the thumbnail and uploads to Amazon S3.
+3. Back-end uploads the photo to Cloudflare R2.
+4. Back-end generates the thumbnail and uploads to Cloudflare R2.
 5. Back-end updates the photo metadata with `Url` and `ThumbnailUrl`.
 6. Back-end returns the photo metadata as the response.
 
@@ -177,8 +177,8 @@ Authorization: Session
     {
       "id": 1,
       "photoName": "1.JPG",
-      "url": "https://mapfolio.tor1.cdn.digitaloceanspaces.com/uploads/1744500664095-1.jpg",
-      "thumbnailUrl": "https://mapfolio.tor1.cdn.digitaloceanspaces.com/uploads/thumbnails/1744500665733-1.jpg",
+      "url": "https://pub-your-hash.r2.dev/uploads/1744500664095-1.jpg",
+      "thumbnailUrl": "https://pub-your-hash.r2.dev/uploads/thumbnails/1744500665733-1.jpg",
       "photoCountry": "Australia",
       "photoCity": "New South Wales",
       "photoTimestamp": "2016-08-04T21:10:11.000Z",
@@ -192,8 +192,8 @@ Authorization: Session
     {
       "id": 2,
       "photoName": "2.jpg",
-      "url": "https://mapfolio.tor1.cdn.digitaloceanspaces.com/uploads/1744500665923-2.jpg",
-      "thumbnailUrl": "https://mapfolio.tor1.cdn.digitaloceanspaces.com/uploads/thumbnails/1744500666641-2.jpg",
+      "url": "https://pub-your-hash.r2.dev/uploads/1744500665923-2.jpg",
+      "thumbnailUrl": "https://pub-your-hash.r2.dev/uploads/thumbnails/1744500666641-2.jpg",
       "photoCountry": "France",
       "photoCity": "Paris",
       "photoTimestamp": "2019-01-28T22:13:22.000Z",
@@ -274,11 +274,11 @@ Update the `.env` file with your own environment variables. The `.env` file shou
 ```dotenv
 DATABASE_URL=your-database-url
 
-SPACES_KEY=your-access-key
-SPACES_SECRET=your-secret-key
-SPACES_REGION=tor1
-SPACES_BUCKET=mapfolio
-SPACES_ENDPOINT=https://tor1.digitaloceanspaces.com
+R2_ACCESS_KEY_ID=your-access-key-id
+R2_SECRET_ACCESS_KEY=your-secret-access-key
+R2_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
+R2_BUCKET_NAME=your-bucket-name
+R2_PUBLIC_URL=https://pub-your-hash.r2.dev
 
 MAPBOX_ACCESS_TOKEN=your-mapbox-access-token
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=your-mapbox-access-token
@@ -300,9 +300,10 @@ accessible hosted database solution. The connection string can be found in the f
 
 ### Cloud Storage Configuration
 
-`SPACES_KEY` and `SPACES_SECRET` are the access key and secret key for your DigitalOcean Spaces account. `SPACES_KEY`
-refers to the `Access Key ID`, which can be found under `Spaces Object Storage` -> `Settings` Tab. `SPACES_SECRET` is
-the `Secret Key` which is only displayed once at the time of creation.
+`R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY` are the access key and secret key for your Cloudflare R2 bucket.
+`R2_ENDPOINT` is the S3 API endpoint for your R2 bucket, typically in the format
+`https://<ACCOUNT_ID>.r2.cloudflarestorage.com`. `R2_PUBLIC_URL` is the public URL of your bucket, which can be a custom
+domain or a `pub-<hash>.r2.dev` URL.
 
 ### Mapbox API Configuration
 

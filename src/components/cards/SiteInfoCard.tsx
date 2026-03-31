@@ -16,7 +16,7 @@ export const SiteInfoCard = () => {
           <p className='text-base'> Next.js / TypeScript </p>
           <p className='text-base'> Tailwind CSS / GSAP / shadcn </p>
           <p className='text-base'> PostgreSQL / Supabase / Prisma </p>
-          <p className='text-base'> Mapbox API / Amazon S3 / Digital Ocean </p>
+          <p className='text-base'> Mapbox API / Amazon S3 / Cloudflare R2 </p>
           <p></p>
           <p className='uppercase text-sm tracking-widest'> ( DEPLOY ) </p>
           <p className='text-base'> Vercel </p>

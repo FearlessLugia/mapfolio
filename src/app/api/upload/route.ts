@@ -8,11 +8,11 @@ import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
 
 const s3Client = new S3Client({
-  endpoint: process.env.SPACES_ENDPOINT,
-  region: process.env.SPACES_REGION,
+  endpoint: process.env.R2_ENDPOINT,
+  region: 'auto',
   credentials: {
-    accessKeyId: process.env.SPACES_KEY!,
-    secretAccessKey: process.env.SPACES_SECRET!
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!
   }
 })
 
@@ -115,14 +115,13 @@ export async function POST(req: NextRequest) {
         }
       })
 
-      // Step 2: upload original image to S3
+      // Step 2: upload original image to R2
       const key = `uploads/${Date.now()}-${file.name}`
 
       const command = new PutObjectCommand({
-        Bucket: process.env.SPACES_BUCKET,
+        Bucket: process.env.R2_BUCKET_NAME,
         Key: key,
         Body: buffer,
-        ACL: 'public-read',
         ContentType: file.type || 'application/octet-stream'
       })
 
@@ -139,22 +138,21 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      // Step 4: upload thumbnail to S3
+      // Step 4: upload thumbnail to R2
       const thumbKey = `uploads/thumbnails/${Date.now()}-${file.name.replace(/\.[^.]+$/, '')}.jpg`
       const thumbCommand = new PutObjectCommand({
-        Bucket: process.env.SPACES_BUCKET,
+        Bucket: process.env.R2_BUCKET_NAME,
         Key: thumbKey,
         Body: thumbnailBuffer,
-        ACL: 'public-read',
         ContentType: 'image/jpeg'
       })
 
       await s3Client.send(thumbCommand)
 
 
-      // Step 5: update metadata with S3 URL
-      const url = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.cdn.digitaloceanspaces.com/${key}`
-      const thumbnailUrl = `https://${process.env.SPACES_BUCKET}.${process.env.SPACES_REGION}.cdn.digitaloceanspaces.com/${thumbKey}`
+      // Step 5: update metadata with R2 URL
+      const url = `${process.env.R2_PUBLIC_URL}/${key}`
+      const thumbnailUrl = `${process.env.R2_PUBLIC_URL}/${thumbKey}`
 
       const updatedRecord = await db.photo.update({
         where: { id: dbRecord.id },
