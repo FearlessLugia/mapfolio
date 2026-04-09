@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { Photo } from '@prisma/client'
@@ -42,6 +42,11 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<mapboxgl.Map | null>(null)
 
+  // Shuffle photos once on mount/prop-change to ensure randomness on refresh but stability during session
+  const stablePhotos = useMemo(() => {
+    return [...photos].sort(() => Math.random() - 0.5)
+  }, [photos])
+
   // Main dialog: either shows single or cluster gallery
   const [dialogOpen, setDialogOpen] = useState(false)
   const [selectedPhotos, setSelectedPhotos] = useState<MapPhotoProps[]>([])
@@ -79,7 +84,7 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
     // Build the GeoJSON with both originalUrl & thumbnailUrl in properties.
     const geojson: FeatureCollection<Point, MapPhotoProps> = {
       type: 'FeatureCollection',
-      features: photos
+      features: stablePhotos
         .filter((p) => p.photoLocation)
         .map((p) => {
           const { latitude, longitude } = p.photoLocation!
@@ -171,11 +176,11 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
           const clusterPhotos = clusterPhotosMap.get(clusterId)
           if (!clusterPhotos || clusterPhotos.length === 0) return
 
-          // Randomize the photos in this cluster for gallery display and thumbnail selection
-          const shuffledClusterPhotos = [...clusterPhotos].sort(() => Math.random() - 0.5)
+          // No longer shuffling here. We use the stable order from GeoJSON.
+          const orderedClusterPhotos = [...clusterPhotos]
 
-          // Use a random photo's thumbnail as the marker background
-          const sampleUrl = shuffledClusterPhotos[0].thumbnailUrl
+          // Use the first photo's thumbnail as the marker background
+          const sampleUrl = orderedClusterPhotos[0].thumbnailUrl
 
           const el = document.createElement('div')
           el.className =
@@ -189,9 +194,9 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
           badge.textContent = String(clusterCount)
           el.appendChild(badge)
 
-          // Clicking the cluster => open a gallery with these photos (shuffled)
+          // Clicking the cluster => open a gallery with these photos
           el.addEventListener('click', () => {
-            setSelectedPhotos(shuffledClusterPhotos)
+            setSelectedPhotos(orderedClusterPhotos)
             setDialogOpen(true)
           })
 
@@ -229,7 +234,7 @@ export default function MapPage({ photos }: { photos: PhotoWithLocation[] }) {
     return () => {
       map.remove()
     }
-  }, [photos])
+  }, [stablePhotos])
 
   return (
     <>
