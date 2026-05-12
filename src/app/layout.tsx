@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Mapfolio',
-  description: 'A full-stack personal portfolio website with an interactive photo map',
+  title: 'Kiiro Huang',
+  description: 'Software Engineer based in Toronto, ON',
   icons: {
     icon: '/favicon.svg'
   }
