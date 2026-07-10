@@ -39,7 +39,7 @@ export const Projects = () => {
     <>
       <div
         ref={containerRef}
-        className='cards w-full max-w-[900px] mx-auto grid'
+        className='cards w-full max-w-[900px] mx-auto grid px-4 md:px-8'
         style={{ visibility: 'hidden' }}
       >
         {projects.map((item, i) => {

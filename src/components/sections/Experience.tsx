@@ -18,40 +18,61 @@ export const Experience = () => {
   const axisHeight = (latest - earliest) * MONTH_HEIGHT
 
   return (
-    <section className='relative mx-auto max-w-5xl mt-20'
-             style={{ height: axisHeight }}>
-      {/* central axis */}
-      <div
-        className='absolute left-1/2 -translate-x-1/2 bg-border w-px h-full'
-      />
+    <section className='relative mx-auto max-w-5xl mt-20'>
+      {/* Desktop Layout (hidden on small screens) */}
+      <div className='hidden md:block relative w-full' style={{ height: axisHeight }}>
+        {/* central axis */}
+        <div className='absolute left-1/2 -translate-x-1/2 bg-border w-px h-full' />
+        {items.map((item) => {
+          const isLeft = item.direction === ExpCardDirection.Left
+          const endM = toMonths({ year: item.endYear, month: item.endMonth })
+          const topPx = (latest - endM) * MONTH_HEIGHT
+          const months = spanInMonths(
+            { year: item.startYear, month: item.startMonth },
+            { year: item.endYear, month: item.endMonth }
+          )
+          const spanPx = months * MONTH_HEIGHT
+          const compact = spanPx - MONTH_HEIGHT < 120
 
-      {items.map((item) => {
-        const isLeft = item.direction === ExpCardDirection.Left
-        const endM = toMonths({ year: item.endYear, month: item.endMonth })
-        const topPx = (latest - endM) * MONTH_HEIGHT
-        const months = spanInMonths(
-          { year: item.startYear, month: item.startMonth },
-          { year: item.endYear, month: item.endMonth }
-        )
-        const spanPx = months * MONTH_HEIGHT
-        const compact = spanPx - MONTH_HEIGHT < 120
-
-        return (
-          <div
-            key={`${item.place}-${item.startYear}`}
-            className='absolute flex'
-            style={{ top: topPx, height: spanPx, [isLeft ? 'left' : 'right']: 20 }}
-          >
-            <div className='relative flex flex-col items-center'>
-              <ExperienceCardWithDialog
-                experience={item}
-                spanPx={spanPx}
-                compact={compact}
-              />
+          return (
+            <div
+              key={`desktop-${item.place}-${item.startYear}`}
+              className='absolute flex'
+              style={{ top: topPx, height: spanPx, [isLeft ? 'left' : 'right']: 20 }}
+            >
+              <div className='relative flex flex-col items-center'>
+                <ExperienceCardWithDialog
+                  experience={item}
+                  spanPx={spanPx}
+                  compact={compact}
+                />
+              </div>
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
+
+      {/* Mobile Layout (visible on small screens) */}
+      <div className='block md:hidden relative w-full px-4'>
+        {/* left axis */}
+        <div className='absolute left-10 top-0 bottom-0 bg-border w-px' />
+        <div className='flex flex-col gap-8 py-4'>
+          {items.map((item) => (
+            <div key={`mobile-${item.place}-${item.startYear}`} className='relative pl-12'>
+              {/* timeline node dot */}
+              <div className='absolute left-6 top-8 w-3 h-3 rounded-full bg-primary -translate-x-1/2 outline outline-4 outline-background' />
+              <div className='w-full'>
+                <ExperienceCardWithDialog
+                  experience={item}
+                  spanPx={0}
+                  compact={true}
+                  hideDetail={true}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </section>
   )
 }

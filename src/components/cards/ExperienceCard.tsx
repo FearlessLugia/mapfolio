@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { ExpCardItem } from '@/data/experiences'
 
 type Props = { experience: ExpCardItem; showDetail?: boolean };
-export const ExperienceCard = ({ experience }: Props) => (
+export const ExperienceCard = ({ experience, showDetail = true }: Props) => (
   <div className='flex flex-col gap-2'>
     <CardHeader>
       <CardTitle className='text-xl font-semibold'>{experience.place}</CardTitle>
@@ -22,7 +22,7 @@ export const ExperienceCard = ({ experience }: Props) => (
             ))}
           </div>
         )}
-        {experience.detail && (
+        {experience.detail && showDetail && (
           <ul className='list-disc list-inside space-y-1'>
             {experience.detail.map((item, i) => (
               <li key={i}>{item}</li>
