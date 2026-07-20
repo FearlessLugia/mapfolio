@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { NextRequest, NextResponse } from 'next/server'
 import * as exifr from 'exifr'
 import { db } from '@/lib/prisma'
@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
     }
 
     const dbRecords: Photo[] = []
+    const failedFiles: string[] = []
 
     for (const file of files) {
       const arrayBuffer = await file.arrayBuffer()
@@ -101,72 +102,98 @@ export async function POST(req: NextRequest) {
         console.warn(`Failed to parse EXIF for ${file.name}:`, exifErr)
       }
 
-      // Step 1: write metadata
-      const dbRecord = await db.photo.create({
-        data: {
-          photoName: file.name,
-          url: '',
-          thumbnailUrl: '',
-          photoCountry,
-          photoCity,
-          photoTimestamp: takenAt,
-          photoLocation: latitude && longitude ? { latitude, longitude } : Prisma.JsonNull,
-          status: PhotoStatus.Uploading
-        }
-      })
+      // Track R2 keys for rollback
+      let dbRecordId: number | null = null
+      let r2Key: string | null = null
+      let r2ThumbKey: string | null = null
 
-      // Step 2: upload original image to R2
-      const key = `uploads/${Date.now()}-${file.name}`
-
-      const command = new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
-        Key: key,
-        Body: buffer,
-        ContentType: file.type || 'application/octet-stream'
-      })
-
-      await s3Client.send(command)
-
-      // Step 3: generate thumbnail
-      let thumbnailBuffer: Buffer
       try {
-        thumbnailBuffer = await sharp(buffer)
+        // Step 1: write metadata to DB
+        const dbRecord = await db.photo.create({
+          data: {
+            photoName: file.name,
+            url: '',
+            thumbnailUrl: '',
+            photoCountry,
+            photoCity,
+            photoTimestamp: takenAt,
+            photoLocation: latitude && longitude ? { latitude, longitude } : Prisma.JsonNull,
+            status: PhotoStatus.Uploading
+          }
+        })
+        dbRecordId = dbRecord.id
+
+        // Step 2: upload original image to R2
+        r2Key = `uploads/${Date.now()}-${file.name}`
+        
+        const command = new PutObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: r2Key,
+          Body: buffer,
+          ContentType: file.type || 'application/octet-stream'
+        })
+        
+        await s3Client.send(command)
+
+        // Step 3: generate thumbnail
+        const thumbnailBuffer = await sharp(buffer)
           .resize({ width: 600 })
           .toBuffer()
-      } catch (sharpErr) {
-        console.error('Failed to generate thumbnail:', sharpErr)
-        continue
-      }
 
-      // Step 4: upload thumbnail to R2
-      const thumbKey = `uploads/thumbnails/${Date.now()}-${file.name.replace(/\.[^.]+$/, '')}.jpg`
-      const thumbCommand = new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
-        Key: thumbKey,
-        Body: thumbnailBuffer,
-        ContentType: 'image/jpeg'
-      })
+        // Step 4: upload thumbnail to R2
+        r2ThumbKey = `uploads/thumbnails/${Date.now()}-${file.name.replace(/\.[^.]+$/, '')}.jpg`
+        const thumbCommand = new PutObjectCommand({
+          Bucket: process.env.R2_BUCKET_NAME,
+          Key: r2ThumbKey,
+          Body: thumbnailBuffer,
+          ContentType: 'image/jpeg'
+        })
+        await s3Client.send(thumbCommand)
 
-      await s3Client.send(thumbCommand)
+        // Step 5: update DB record with URLs and final status
+        const url = `${process.env.R2_PUBLIC_URL}/${r2Key}`
+        const thumbnailUrl = `${process.env.R2_PUBLIC_URL}/${r2ThumbKey}`
 
+        const updatedRecord = await db.photo.update({
+          where: { id: dbRecord.id },
+          data: {
+            url,
+            thumbnailUrl,
+            status: PhotoStatus.Uploaded
+          }
+        })
 
-      // Step 5: update metadata with R2 URL
-      const url = `${process.env.R2_PUBLIC_URL}/${key}`
-      const thumbnailUrl = `${process.env.R2_PUBLIC_URL}/${thumbKey}`
+        dbRecords.push(updatedRecord)
+      } catch (uploadErr) {
+        console.error(`Upload failed for ${file.name}:`, uploadErr)
+        failedFiles.push(file.name)
 
-      const updatedRecord = await db.photo.update({
-        where: { id: dbRecord.id },
-        data: {
-          url,
-          thumbnailUrl,
-          status: PhotoStatus.Uploaded
+        // Rollback: delete DB record
+        if (dbRecordId) {
+          await db.photo.delete({ where: { id: dbRecordId } }).catch((e) =>
+            console.error(`Rollback: failed to delete DB record ${dbRecordId}:`, e)
+          )
         }
-      })
 
-      dbRecords.push(updatedRecord)
+        // Rollback: try to clean up R2 files
+        if (r2Key) {
+          await s3Client.send(new DeleteObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME, Key: r2Key
+          })).catch((e) =>
+            console.error(`Rollback: failed to delete R2 key ${r2Key}:`, e)
+          )
+        }
+        if (r2ThumbKey) {
+          await s3Client.send(new DeleteObjectCommand({
+            Bucket: process.env.R2_BUCKET_NAME, Key: r2ThumbKey
+          })).catch((e) =>
+            console.error(`Rollback: failed to delete R2 thumb ${r2ThumbKey}:`, e)
+          )
+        }
+      }
     }
 
-    return NextResponse.json({ dbRecords }, { status: 200 })
+    return NextResponse.json({ dbRecords, failedFiles }, { status: 200 })
 
   } catch (error) {
     console.error('Upload error:', error)
