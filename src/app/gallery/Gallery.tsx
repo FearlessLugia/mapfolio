@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Photo } from '@prisma/client'
@@ -11,9 +11,10 @@ export default function Gallery({ photos }: { photos: Photo[] }) {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null)
   const [imageLoaded, setImageLoaded] = useState(false)
 
-  // Shuffle the photos array once when the component mounts or the photos prop changes
-  const shuffledPhotos = useMemo(() => {
-    return [...photos].sort(() => Math.random() - 0.5)
+  const [shuffledPhotos, setShuffledPhotos] = useState<Photo[]>(photos)
+
+  useEffect(() => {
+    setShuffledPhotos([...photos].sort(() => Math.random() - 0.5))
   }, [photos])
 
   const openPhotoDetail = (photo: Photo) => {
