@@ -147,7 +147,7 @@ repositories.
 
 ### API Design
 
-Besides user authentication and authorization, this system exposes an end-user API endpoint for photo uploading.
+Besides user authentication and authorization, this system exposes end-user API endpoints for photo uploading and storage cleanup.
 
 #### Photo Upload API
 
@@ -157,17 +157,19 @@ Authorization: Session
 
 ##### Upload API Workflow
 
-1. User uploads photo in front-end and calls the back-end API.
-2. Back-end extracts location information from the photo and stores it in the database, with placeholders in properties
-   of `Url` and `ThumbnailUrl`.
-3. Back-end uploads the photo to Cloudflare R2.
-4. Back-end generates the thumbnail and uploads to Cloudflare R2.
-5. Back-end updates the photo metadata with `Url` and `ThumbnailUrl`.
-6. Back-end returns the photo metadata as the response.
+1. User selects photos on the front-end and triggers upload.
+2. For each photo:
+   - Back-end extracts location (EXIF) data and initializes a database record with `status: Uploading`.
+   - Back-end uploads the original photo to Cloudflare R2.
+   - Back-end generates a 600px thumbnail using `sharp` and uploads it to R2.
+   - Back-end updates the database record with public URLs and marks `status: Uploaded`.
+   - **Rollback on Error**: If any step fails for a photo, the back-end catches the error, deletes the database record, cleans up any partially uploaded R2 files for that photo, and records the failure.
+3. Back-end returns `dbRecords` (successfully uploaded items) and `failedFiles` (filenames that failed).
+4. Front-end allows retrying only the failed/waiting photos without re-uploading successfully processed ones.
 
 ##### Request Body
 
-- files (array of form data): The photo files to be uploaded.
+- `files` (array of form data): The photo files to be uploaded.
 
 ##### Response
 
@@ -183,30 +185,34 @@ Authorization: Session
       "photoCity": "New South Wales",
       "photoTimestamp": "2016-08-04T21:10:11.000Z",
       "uploadedTimestamp": "2025-04-12T23:31:04.092Z",
-      "status": "uploaded",
+      "status": "Uploaded",
       "photoLocation": {
         "latitude": -33.853081,
         "longitude": 151.205506
       }
-    },
-    {
-      "id": 2,
-      "photoName": "2.jpg",
-      "url": "https://pub-your-hash.r2.dev/uploads/1744500665923-2.jpg",
-      "thumbnailUrl": "https://pub-your-hash.r2.dev/uploads/thumbnails/1744500666641-2.jpg",
-      "photoCountry": "France",
-      "photoCity": "Paris",
-      "photoTimestamp": "2019-01-28T22:13:22.000Z",
-      "uploadedTimestamp": "2025-04-12T23:31:05.922Z",
-      "status": "uploaded",
-      "photoLocation": {
-        "latitude": 48.862228,
-        "longitude": 2.288392
-      }
     }
-  ]
+  ],
+  "failedFiles": []
 }
 ```
+
+#### Cleanup APIs
+
+##### 1. Clean DB Zombie Records
+
+API Endpoint: `POST /api/cleanup/db`
+
+Authorization: Session
+
+Removes database records stuck in non-final statuses (`Uploading`/`Waiting` for > 30 minutes, or `Error`), as well as records missing URLs, along with their associated R2 files.
+
+##### 2. Clean R2 Orphan Files
+
+API Endpoint: `POST /api/cleanup/r2`
+
+Authorization: Session
+
+Scans the Cloudflare R2 `uploads/` directory and deletes files that are no longer referenced by any photo record in PostgreSQL.
 
 ## User Guide
 
@@ -233,13 +239,13 @@ a cluster marker opens a dialog showing all photos from that location.
 
 Endpoint: `/upload`
 
-Upload page allows the admin to upload photos. This page is only accessible in development mode.
+Upload page allows the admin to upload photos. Features automatic retry for failed files. This page is only accessible in development mode.
 
 ### Admin Page
 
 Endpoint: `/admin`
 
-Admin page is used for signing in and signing out of the system. This page is only accessible in development mode.
+Admin page is used for signing in, signing out, and running maintenance tasks (cleaning up database zombie records and Cloudflare R2 orphan files). This page is only accessible in development mode.
 
 ### Sign-up Page
 
