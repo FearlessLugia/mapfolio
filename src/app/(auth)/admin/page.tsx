@@ -122,9 +122,48 @@ export default function AdminPage() {
           </Button>
         </form>
       ) : (
-        <div className='mt-6'>
-          <Button variant='outline' className='w-full mb-10' onClick={handleSignOut}>
+        <div className='mt-6 space-y-4'>
+          <Button variant='outline' className='w-full' onClick={handleSignOut}>
             Sign Out
+          </Button>
+
+          <hr className='my-4' />
+          <h2 className='text-lg font-semibold'>Cleanup</h2>
+
+          <Button
+            variant='outline'
+            className='w-full'
+            onClick={async () => {
+              const res = await fetch('/api/cleanup/db', { method: 'POST' })
+              const data = await res.json()
+              if (res.ok) {
+                toast.success('DB Cleanup Complete', {
+                  description: `Deleted ${data.deleted} zombie record(s).${data.errors.length > 0 ? ` ${data.errors.length} error(s).` : ''}`
+                })
+              } else {
+                toast.error('DB Cleanup Failed', { description: data.error })
+              }
+            }}
+          >
+            🗃️ Clean DB Zombies
+          </Button>
+
+          <Button
+            variant='outline'
+            className='w-full'
+            onClick={async () => {
+              const res = await fetch('/api/cleanup/r2', { method: 'POST' })
+              const data = await res.json()
+              if (res.ok) {
+                toast.success('R2 Cleanup Complete', {
+                  description: `Deleted ${data.deleted} orphan file(s).${data.errors.length > 0 ? ` ${data.errors.length} error(s).` : ''}`
+                })
+              } else {
+                toast.error('R2 Cleanup Failed', { description: data.error })
+              }
+            }}
+          >
+            ☁️ Clean R2 Orphans
           </Button>
         </div>
       )}
