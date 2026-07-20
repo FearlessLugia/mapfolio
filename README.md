@@ -344,7 +344,7 @@ This command will start the development server on `http://localhost:3000`.
 
 ### Live URL
 
-https://kiiroh.tech
+https://kiiroh.codes
 
 ### Deployment Platform Details
 
