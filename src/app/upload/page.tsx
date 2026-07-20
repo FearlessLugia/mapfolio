@@ -16,14 +16,19 @@ type UploadStatus = {
 }
 
 export default function UploadPage() {
-  // const [files, setFiles] = useState<FileList | null>(null)
-  // const [previews, setPreviews] = useState<string[]>([])
-  // const [urls, setUrls] = useState<string[]>([])
-  // const [error, setError] = useState<string | null>(null)
   const [uploadStatuses, setUploadStatuses] = useState<UploadStatus[]>([])
+  const [isUploading, setIsUploading] = useState(false)
   
   const MAX_SIZE_MB = 10
   const ALLOWED_TYPES = ['image/jpeg', 'image/jpg']
+
+  const updateItem = (index: number, updates: Partial<UploadStatus>) => {
+    setUploadStatuses((prev) => {
+      const next = [...prev]
+      next[index] = { ...next[index], ...updates }
+      return next
+    })
+  }
   
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = e.target.files
@@ -56,7 +61,7 @@ export default function UploadPage() {
               file,
               preview: reader.result as string,
               progress: 0,
-              status: PhotoStatus.Uploading
+              status: PhotoStatus.Waiting
             })
           }
           reader.readAsDataURL(file)
@@ -69,11 +74,25 @@ export default function UploadPage() {
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    const updatedStatuses = [...uploadStatuses]
+    setIsUploading(true)
+
+    // Only upload items that are Waiting or Error (retry)
+    const indicesToUpload = uploadStatuses
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => item.status === PhotoStatus.Waiting || item.status === PhotoStatus.Error)
+      .map(({ index }) => index)
+
+    if (indicesToUpload.length === 0) {
+      toast.info('Nothing to upload', {
+        description: 'All files have already been uploaded.'
+      })
+      setIsUploading(false)
+      return
+    }
     
     await Promise.all(
-      updatedStatuses.map((item, index) => {
+      indicesToUpload.map((index) => {
+        const item = uploadStatuses[index]
         return new Promise<void>((resolve) => {
           const xhr = new XMLHttpRequest()
           const formData = new FormData()
@@ -83,26 +102,29 @@ export default function UploadPage() {
           
           xhr.upload.onprogress = (e) => {
             const percent = Math.round((e.loaded / e.total) * 100)
-            updatedStatuses[index].progress = percent
-            updatedStatuses[index].status = PhotoStatus.Uploading
-            setUploadStatuses([...updatedStatuses])
+            updateItem(index, { progress: percent, status: PhotoStatus.Uploading })
           }
           
           xhr.onload = () => {
             if (xhr.status === 200) {
               const res = JSON.parse(xhr.responseText)
-              updatedStatuses[index].status = PhotoStatus.Uploaded
-              updatedStatuses[index].url = res.dbRecords?.[0]?.url || null
+              if (res.dbRecords?.length > 0) {
+                updateItem(index, {
+                  status: PhotoStatus.Uploaded,
+                  url: res.dbRecords[0].url
+                })
+              } else {
+                // Server returned 200 but file was in failedFiles
+                updateItem(index, { status: PhotoStatus.Error })
+              }
             } else {
-              updatedStatuses[index].status = PhotoStatus.Error
+              updateItem(index, { status: PhotoStatus.Error })
             }
-            setUploadStatuses([...updatedStatuses])
             resolve()
           }
           
           xhr.onerror = () => {
-            updatedStatuses[index].status = PhotoStatus.Error
-            setUploadStatuses([...updatedStatuses])
+            updateItem(index, { status: PhotoStatus.Error })
             resolve()
           }
           
@@ -110,19 +132,25 @@ export default function UploadPage() {
         })
       })
     )
+
+    setIsUploading(false)
     
-    // Once all uploads are finished, check if all were successful
-    const allSuccess = updatedStatuses.every((item) => item.status === PhotoStatus.Uploaded)
-    
-    if (allSuccess) {
-      toast.success('Upload Complete', {
-        description: 'All files uploaded successfully!'
-      })
-    } else {
-      toast.error('Upload Error', {
-        description: 'Some files failed to upload. Please try again.'
-      })
-    }
+    // Check final state
+    setUploadStatuses((current) => {
+      const allSuccess = current.every((item) => item.status === PhotoStatus.Uploaded)
+      const hasErrors = current.some((item) => item.status === PhotoStatus.Error)
+      
+      if (allSuccess) {
+        toast.success('Upload Complete', {
+          description: 'All files uploaded successfully!'
+        })
+      } else if (hasErrors) {
+        toast.error('Some uploads failed', {
+          description: 'Click Upload again to retry failed files.'
+        })
+      }
+      return current
+    })
   }
 
 // Programmatically trigger the hidden file input:
@@ -130,6 +158,10 @@ export default function UploadPage() {
     // We can directly get the input with getElementById or a ref
     document.getElementById('hidden-file-input')?.click()
   }
+
+  const hasRetryable = uploadStatuses.some(
+    (item) => item.status === PhotoStatus.Error || item.status === PhotoStatus.Waiting
+  )
   
   return (
     <main className='px-6 h-full'>
@@ -146,9 +178,17 @@ export default function UploadPage() {
             onChange={handleFileChange}
           />
           {/* Button that triggers the hidden file input */}
-          <Button type='button' variant='outline' onClick={handleClick}>Select Files</Button>
+          <Button type='button' variant='outline' onClick={handleClick} disabled={isUploading}>
+            Select Files
+          </Button>
           
-          <Button type='submit'>Upload</Button>
+          <Button type='submit' disabled={isUploading || !hasRetryable}>
+            {isUploading
+              ? 'Uploading...'
+              : uploadStatuses.some((item) => item.status === PhotoStatus.Error)
+                ? 'Retry Failed'
+                : 'Upload'}
+          </Button>
         </div>
         
         {/* thumbnail preview */}
@@ -177,7 +217,7 @@ export default function UploadPage() {
               </div>
               
               <p className='text-sm mt-1'>
-                {item.status === PhotoStatus.Waiting && 'Waiting for upload'}
+                {item.status === PhotoStatus.Waiting && 'Ready to upload'}
                 {item.status === PhotoStatus.Uploading && `Uploading... ${item.progress}%`}
                 {item.status === PhotoStatus.Uploaded && '✅ Uploaded successfully'}
                 {item.status === PhotoStatus.Error && '❌ Upload failed'}
@@ -187,7 +227,6 @@ export default function UploadPage() {
         </div>
       </form>
       
-      {/*{error && <p className='text-red-600'>{error}</p>}*/}
       <Toaster richColors />
     </main>
   )
